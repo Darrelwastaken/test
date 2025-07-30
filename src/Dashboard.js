@@ -231,10 +231,6 @@ export default function Dashboard({ user }) {
     <div style={{ background: '#f6f7f9', minHeight: '100vh' }}>
       <Sidebar clientId={nric} />
       <main style={{ marginLeft: 240, padding: 32 }}>
-        <div style={{ marginBottom: 24 }}>
-          <div style={{ fontSize: 28, fontWeight: 700, color: '#222' }}>{clientName || 'Client Dashboard'}</div>
-        </div>
-
         {/* Header */}
         <div style={{
           display: "flex",
@@ -292,19 +288,19 @@ export default function Dashboard({ user }) {
         <div style={{ display: 'flex', gap: 24, marginBottom: 24 }}>
           {/* Profile Card */}
           <div style={{ background: '#fff', borderRadius: 16, padding: 24, flex: 1, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-            <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 8 }}>{clientName || 'Client Name'}</div>
-            <div style={{ color: '#6b7280', fontSize: 15, marginBottom: 4 }}>NRIC: {nric}</div>
-            <div style={{ color: '#6b7280', fontSize: 15, marginBottom: 4 }}>Email: {client?.email || '-'}</div>
-            <div style={{ color: '#6b7280', fontSize: 15, marginBottom: 4 }}>Status: {clientStatus || '-'}</div>
-            <div style={{ color: '#6b7280', fontSize: 15, marginBottom: 4 }}>Risk Profile: {clientRiskProfile || '-'}</div>
-            <div style={{ color: '#6b7280', fontSize: 15, marginBottom: 4 }}>Relationship Tier: {client?.relationship_tier || '-'}</div>
-            <div style={{ color: '#6b7280', fontSize: 15, marginBottom: 4 }}>Credit Score: {client?.credit_score || '-'}</div>
-            <div style={{ color: '#6b7280', fontSize: 15, marginBottom: 4 }}>DSR Ratio: {client?.dsr_ratio || '-'}</div>
-            <div style={{ color: '#6b7280', fontSize: 15, marginBottom: 4 }}>Nationality: {client?.nationality || '-'}</div>
-            <div style={{ color: '#6b7280', fontSize: 15, marginBottom: 4 }}>Gender: {client?.gender || '-'}</div>
-            <div style={{ color: '#6b7280', fontSize: 15, marginBottom: 4 }}>Marital Status: {client?.marital_status || '-'}</div>
-            <div style={{ color: '#6b7280', fontSize: 15, marginBottom: 4 }}>Employment Status: {client?.employment_status || '-'}</div>
-            <div style={{ color: '#6b7280', fontSize: 15, marginBottom: 4 }}>Birthday: {getBirthdayFromNric(nric)}</div>
+            <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 12 }}>{clientName || 'Client Name'}</div>
+            <div style={{ color: '#374151', fontSize: 16, marginBottom: 6, fontWeight: 500 }}>NRIC: <span style={{ fontWeight: 400 }}>{nric}</span></div>
+            <div style={{ color: '#374151', fontSize: 16, marginBottom: 6, fontWeight: 500 }}>Email: <span style={{ fontWeight: 400 }}>{client?.email || '-'}</span></div>
+            <div style={{ color: '#374151', fontSize: 16, marginBottom: 6, fontWeight: 500 }}>Status: <span style={{ fontWeight: 400 }}>{clientStatus || '-'}</span></div>
+            <div style={{ color: '#374151', fontSize: 16, marginBottom: 6, fontWeight: 500 }}>Risk Profile: <span style={{ fontWeight: 400 }}>{clientRiskProfile || '-'}</span></div>
+            <div style={{ color: '#374151', fontSize: 16, marginBottom: 6, fontWeight: 500 }}>Relationship Tier: <span style={{ fontWeight: 400 }}>{client?.relationship_tier || '-'}</span></div>
+            <div style={{ color: '#374151', fontSize: 16, marginBottom: 6, fontWeight: 500 }}>Credit Score: <span style={{ fontWeight: 400 }}>{client?.credit_score || '-'}</span></div>
+            <div style={{ color: '#374151', fontSize: 16, marginBottom: 6, fontWeight: 500 }}>DSR Ratio: <span style={{ fontWeight: 400 }}>{client?.dsr_ratio || '-'}</span></div>
+            <div style={{ color: '#374151', fontSize: 16, marginBottom: 6, fontWeight: 500 }}>Nationality: <span style={{ fontWeight: 400 }}>{client?.nationality || '-'}</span></div>
+            <div style={{ color: '#374151', fontSize: 16, marginBottom: 6, fontWeight: 500 }}>Gender: <span style={{ fontWeight: 400 }}>{client?.gender || '-'}</span></div>
+            <div style={{ color: '#374151', fontSize: 16, marginBottom: 6, fontWeight: 500 }}>Marital Status: <span style={{ fontWeight: 400 }}>{client?.marital_status || '-'}</span></div>
+            <div style={{ color: '#374151', fontSize: 16, marginBottom: 6, fontWeight: 500 }}>Employment Status: <span style={{ fontWeight: 400 }}>{client?.employment_status || '-'}</span></div>
+            <div style={{ color: '#374151', fontSize: 16, marginBottom: 6, fontWeight: 500 }}>Birthday: <span style={{ fontWeight: 400 }}>{getBirthdayFromNric(nric)}</span></div>
           </div>
           {/* AI Insight Card (modular component) */}
           <div style={{ flex: 2 }}>

@@ -1,94 +1,45 @@
 import React, { useState, useEffect } from 'react';
+import { generateAndSaveInsights, forceRegenerateInsights, clearCacheAndRegenerate } from '../utils/aiInsightsStorage';
 
 export default function AiAnalyzer({ clientData }) {
   const [insights, setInsights] = useState([]);
-  const [recommendations, setRecommendations] = useState([]);
   const [summary, setSummary] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [generatedAt, setGeneratedAt] = useState(null);
 
-  const analyze = async (extraPrompt = '') => {
+  const analyze = async (forceRefresh = false) => {
     setLoading(true);
-          setError('');
-    // Only send minimal client data for AI analysis
-    const minimalClientData = clientData ? {
-      client: {
-        name: clientData.name,
-        nric: clientData.nric,
-        riskProfile: clientData.riskProfile,
-        status: clientData.status
-      },
-      financial: {
-        netWorth: clientData.netWorth,
-        assetUtilization: clientData.assetUtilization
-      },
-      dashboard: {
-        assets: clientData.assets,
-        monthlyCashflow: clientData.monthlyCashflow,
-        accountBalances: {
-          casa: clientData.casa,
-          fd: clientData.fd,
-          loans: clientData.loans,
-          cards: clientData.cards
-        },
-        cashflow: clientData.cashflow
-      },
-      investments: {
-        holdings: clientData.holdings
-      },
-      liabilities: {
-        liabilities: clientData.liabilities,
-        creditLines: clientData.creditLines
-      },
-      transactions: clientData.transactions
-    } : {};
-    const payload = { clientData: minimalClientData, followUp: extraPrompt };
-    console.log('clientData size:', JSON.stringify(minimalClientData).length);
-    console.log("About to send fetch to http://localhost:3000/api/analyze", payload);
+    setError('');
+    
     try {
-      const response = await fetch('http://localhost:3000/api/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if (!response.ok) throw new Error(await response.text());
-      const data = await response.json();
-      
-      // Handle different response formats
-      if (Array.isArray(data.summary)) {
-        // Old format - summary is an array of strings
-        setSummary({ totalOpportunities: data.summary.length, estimatedValue: 0, topPriority: 'none' });
+      let result;
+      if (forceRefresh) {
+        // Clear cache and regenerate when reset button is pressed
+        result = await clearCacheAndRegenerate(clientData);
       } else {
-        // New format - summary is an object
-        setSummary(data.summary || {});
+        result = await generateAndSaveInsights(clientData);
       }
       
-      // Handle insights - could be array of strings or array of objects
-      if (Array.isArray(data.insights)) {
-        if (data.insights.length > 0 && typeof data.insights[0] === 'object') {
-          // New format - array of objects with text property
-          setInsights(data.insights);
-        } else {
-          // Old format - array of strings
-          setInsights(data.insights.map(text => ({ text })));
-        }
-      } else {
-        setInsights([]);
-      }
+      console.log('AI Analysis Result:', result);
       
-      // Handle recommendations - could be array of strings or array of objects
-      if (Array.isArray(data.recommendations)) {
-        if (data.recommendations.length > 0 && typeof data.recommendations[0] === 'object') {
-          // New format - array of objects with text property
-          setRecommendations(data.recommendations);
-        } else {
-          // Old format - array of strings
-          setRecommendations(data.recommendations.map(text => ({ text })));
-        }
+      // If no insights returned, use fallback insights
+      if (!result.insights || result.insights.length === 0) {
+        console.log('No insights returned from AI, using fallback insights');
+        const fallbackInsights = [
+          {
+            insight: "Client profile analyzed - banking data available",
+            reasoning: "Financial metrics and transaction patterns identified"
+          }
+        ];
+        setInsights(fallbackInsights);
       } else {
-        setRecommendations([]);
+        setInsights(result.insights || []);
       }
+      setSummary(result.summary || {});
+      setGeneratedAt(result.generatedAt || null);
     } catch (err) {
+      console.error('AI Analysis Error:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -96,43 +47,65 @@ export default function AiAnalyzer({ clientData }) {
   };
 
   useEffect(() => {
-    if (clientData) {
+    if (clientData && clientData.nric && !insights.length && !loading) {
       analyze();
     }
     // eslint-disable-next-line
-  }, [clientData]);
+  }, [clientData?.nric]); // Only depend on the client NRIC, not the entire clientData object
 
 
 
   // Helper function to render insight/recommendation items
   const renderItem = (item, index) => {
+    console.log('Rendering item:', item, 'at index:', index);
+    
     if (typeof item === 'string') {
       return (
         <div key={index} style={{ 
           background: '#f8f9fa', 
-          padding: '12px', 
-          borderRadius: '8px', 
-          marginBottom: '8px',
-          border: '1px solid #e9ecef'
+          padding: '8px 12px', 
+          borderRadius: '6px', 
+          marginBottom: '6px',
+          border: '1px solid #e9ecef',
+          fontSize: '14px',
+          lineHeight: '1.3'
         }}>
           {item}
         </div>
       );
     } else if (item && typeof item === 'object') {
+      // Handle new insight format with reasoning
+      if (item.insight && item.reasoning) {
+        return (
+          <div key={index} style={{ 
+            background: '#f8f9fa', 
+            padding: '8px 12px', 
+            borderRadius: '6px', 
+            marginBottom: '6px',
+            border: '1px solid #e9ecef',
+            fontSize: '14px',
+            lineHeight: '1.3'
+          }}>
+            {item.insight}
+          </div>
+        );
+      }
+      
+      // Handle legacy format
       return (
         <div key={index} style={{ 
           background: '#f8f9fa', 
-          padding: '12px', 
-          borderRadius: '8px', 
-          marginBottom: '8px',
+          padding: '8px 12px', 
+          borderRadius: '6px', 
+          marginBottom: '6px',
           border: '1px solid #e9ecef'
         }}>
-          <div style={{ fontWeight: '600', marginBottom: '4px', color: '#212529' }}>
+          <div style={{ fontWeight: '600', marginBottom: '2px', color: '#212529', fontSize: '14px', lineHeight: '1.3' }}>
             {item.text}
           </div>
           {item.priority && (
             <div style={{ 
-              fontSize: '12px', 
+              fontSize: '11px', 
               color: item.priority === 'HIGH' ? '#dc3545' : item.priority === 'MEDIUM' ? '#fd7e14' : '#198754',
               fontWeight: '500'
             }}>
@@ -140,17 +113,17 @@ export default function AiAnalyzer({ clientData }) {
             </div>
           )}
           {item.type && (
-            <div style={{ fontSize: '12px', color: '#6c757d' }}>
+            <div style={{ fontSize: '11px', color: '#6c757d' }}>
               Type: {item.type}
             </div>
           )}
           {item.estimatedValue && (
-            <div style={{ fontSize: '12px', color: '#0d6efd', fontWeight: '500' }}>
+            <div style={{ fontSize: '11px', color: '#0d6efd', fontWeight: '500' }}>
               Estimated Value: RM {item.estimatedValue.toLocaleString()}
             </div>
           )}
           {item.products && Array.isArray(item.products) && item.products.length > 0 && (
-            <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
+            <div style={{ fontSize: '11px', color: '#6c757d', marginTop: '2px' }}>
               Products: {item.products.join(', ')}
             </div>
           )}
@@ -176,7 +149,61 @@ export default function AiAnalyzer({ clientData }) {
           }
         `}
       </style>
-      <div style={{ fontWeight: 600, fontSize: 18, marginBottom: 16 }}>AI Insights</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <div style={{ fontWeight: 600, fontSize: 16 }}>AI Insights</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {generatedAt && (
+            <div style={{ 
+              fontSize: '12px', 
+              color: '#6c757d', 
+              background: '#e9ecef', 
+              padding: '4px 8px', 
+              borderRadius: '4px' 
+            }}>
+              Generated: {new Date(generatedAt).toLocaleString()}
+            </div>
+          )}
+          <button
+            onClick={() => analyze(true)}
+            disabled={loading}
+            style={{
+              background: '#6b7280',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '8px',
+              width: '32px',
+              height: '32px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              opacity: loading ? 0.6 : 1
+            }}
+            title={loading ? 'Generating...' : 'Refresh insights'}
+          >
+            <svg 
+              width="16" 
+              height="16" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+              style={{
+                transform: loading ? 'rotate(360deg)' : 'rotate(0deg)',
+                transition: 'transform 0.3s ease'
+              }}
+            >
+              <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+              <path d="M21 3v5h-5"/>
+              <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+              <path d="M3 21v-5h5"/>
+            </svg>
+          </button>
+        </div>
+      </div>
       
       {loading && (
         <div style={{ 
@@ -213,7 +240,7 @@ export default function AiAnalyzer({ clientData }) {
             textAlign: 'center',
             marginTop: '8px'
           }}>
-            Generating insights and recommendations
+            Generating insights...
           </div>
         </div>
       )}
@@ -234,20 +261,34 @@ export default function AiAnalyzer({ clientData }) {
 
       
       {insights.length > 0 && (
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ fontWeight: 600, marginBottom: 8, color: '#212529' }}>AI Insights</div>
-          <div>{insights.map(renderItem)}</div>
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+            {insights.map(renderItem)}
+          </div>
         </div>
       )}
       
-      {recommendations.length > 0 && (
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ fontWeight: 600, marginBottom: 8, color: '#212529' }}>Recommendations</div>
-          <div>{recommendations.map(renderItem)}</div>
+
+      
+      {summary && summary.recommendations && Array.isArray(summary.recommendations) && summary.recommendations.length > 0 && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ 
+            fontWeight: '600', 
+            fontSize: '14px', 
+            color: '#374151', 
+            marginBottom: '8px',
+            borderBottom: '1px solid #e9ecef',
+            paddingBottom: '4px'
+          }}>
+            Quick Actions
+          </div>
+          <div style={{ maxHeight: '120px', overflowY: 'auto' }}>
+            {summary.recommendations.map(renderItem)}
+          </div>
         </div>
       )}
       
-      {!loading && insights.length === 0 && recommendations.length === 0 && !error && (
+      {!loading && insights.length === 0 && !error && (
         <div style={{ 
           color: '#6c757d', 
           margin: '16px 0',

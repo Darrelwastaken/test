@@ -3,6 +3,7 @@ import { FaCog, FaPlus, FaEllipsisH, FaSearch } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
 import { deleteClientCompletely } from './utils/clientDeletion';
+import { deleteAIInsights } from './utils/aiInsightsStorage';
 
 
 
@@ -274,6 +275,9 @@ export default function ClientSelection({ user, onLogout }) {
         } else {
           console.log('Liabilities and credit created for:', clientNric);
         }
+        
+        // Delete any existing AI insights to force regeneration on first dashboard visit
+        await deleteAIInsights(clientNric);
         
         // Update the clients list
         setClients([...clients, clientData]);

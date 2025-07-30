@@ -188,7 +188,8 @@ export class DataDrivenBankingAnalyzer {
     
     if (debtToIncomeRatio < 0.3 && creditUtilization < 0.3) {
       return {
-        text: `Excellent credit profile - ${(debtToIncomeRatio * 100).toFixed(1)}% debt ratio, ${(creditUtilization * 100).toFixed(1)}% credit usage`,
+        insight: `Premium credit profile - ${(creditUtilization * 100).toFixed(1)}% utilization`,
+        reasoning: `Excellent credit score with low debt ratio (${(debtToIncomeRatio * 100).toFixed(1)}%)`,
         priority: 'HIGH',
         type: 'credit_analysis',
         confidence: 0.9,
@@ -200,7 +201,8 @@ export class DataDrivenBankingAnalyzer {
     
     if (creditUtilization > 0.7) {
       return {
-        text: `High credit usage (${(creditUtilization * 100).toFixed(1)}%) - debt consolidation needed`,
+        insight: `High credit utilization - ${(creditUtilization * 100).toFixed(1)}%`,
+        reasoning: `Credit utilization exceeds 70% threshold`,
         priority: 'HIGH',
         type: 'credit_analysis',
         confidence: 0.8,
@@ -212,7 +214,8 @@ export class DataDrivenBankingAnalyzer {
     
     if (debtToIncomeRatio > 0.4) {
       return {
-        text: `Moderate debt burden (${(debtToIncomeRatio * 100).toFixed(1)}%) - credit counseling recommended`,
+        insight: `${(debtToIncomeRatio * 100).toFixed(1)}% debt burden - credit counseling`,
+        reasoning: `Debt-to-income ratio of ${(debtToIncomeRatio * 100).toFixed(1)}% exceeds 40% recommended limit`,
         priority: 'MEDIUM',
         type: 'credit_analysis',
         confidence: 0.7,
@@ -231,7 +234,8 @@ export class DataDrivenBankingAnalyzer {
     
     if (holdings.length === 0 && assetUtilization < 50) {
       return {
-        text: `No investments detected - portfolio building opportunity`,
+        insight: `No investment products`,
+        reasoning: `${(assetUtilization * 100).toFixed(1)}% asset utilization with no investments`,
         priority: 'MEDIUM',
         type: 'investment_analysis',
         confidence: 0.9,
@@ -243,7 +247,8 @@ export class DataDrivenBankingAnalyzer {
     
     if (investmentDiversity < 0.3 && holdings.length > 0) {
       return {
-        text: `Low portfolio diversification (${(investmentDiversity * 100).toFixed(1)}%) - rebalancing needed`,
+        insight: `${(investmentDiversity * 100).toFixed(1)}% diversification - rebalance needed`,
+        reasoning: `Portfolio diversity of ${(investmentDiversity * 100).toFixed(1)}% is below 30% recommended threshold`,
         priority: 'MEDIUM',
         type: 'investment_analysis',
         confidence: 0.8,
@@ -255,7 +260,8 @@ export class DataDrivenBankingAnalyzer {
     
     if (assetUtilization > 80) {
       return {
-        text: `High asset utilization (${assetUtilization.toFixed(1)}%) - risk management needed`,
+        insight: `${assetUtilization.toFixed(1)}% utilization - risk management`,
+        reasoning: `Asset utilization of ${assetUtilization.toFixed(1)}% exceeds 80% risk threshold`,
         priority: 'MEDIUM',
         type: 'investment_analysis',
         confidence: 0.8,
@@ -274,7 +280,8 @@ export class DataDrivenBankingAnalyzer {
     
     if (netWorth > 500000) {
       return {
-        text: `High net worth client (RM${this.formatCurrency(netWorth)}) - wealth management focus`,
+        insight: `High net worth - RM${this.formatCurrency(netWorth)}`,
+        reasoning: `Premium client segment based on net worth`,
         priority: 'HIGH',
         type: 'wealth_analysis',
         confidence: 0.9,
@@ -286,7 +293,8 @@ export class DataDrivenBankingAnalyzer {
     
     if (avgCashflow > 8000 && netWorth > 100000) {
       return {
-        text: `Strong wealth building (RM${this.formatCurrency(avgCashflow)}/month cash flow) - investment opportunities`,
+        insight: `High cash flow - RM${this.formatCurrency(avgCashflow)}/month`,
+        reasoning: `Strong income pattern with RM${this.formatCurrency(netWorth)} net worth`,
         priority: 'MEDIUM',
         type: 'wealth_analysis',
         confidence: 0.8,
@@ -298,7 +306,8 @@ export class DataDrivenBankingAnalyzer {
     
     if (netWorth < 50000 && avgCashflow > 0) {
       return {
-        text: `Building wealth foundation - savings opportunity`,
+        insight: `Mass market client - RM${this.formatCurrency(netWorth)} net worth`,
+        reasoning: `Building wealth with RM${this.formatCurrency(avgCashflow)}/month cash flow`,
         priority: 'MEDIUM',
         type: 'wealth_analysis',
         confidence: 0.7,
@@ -317,7 +326,7 @@ export class DataDrivenBankingAnalyzer {
     
     if (cashflowStability < 0.5 && emergencyFundRatio < 0.5) {
       return {
-        text: `Financial risk factors - low stability (${(cashflowStability * 100).toFixed(1)}%), insufficient emergency fund`,
+        text: `${(cashflowStability * 100).toFixed(1)}% stability - emergency fund needed`,
         priority: 'HIGH',
         type: 'risk_analysis',
         confidence: 0.9,
@@ -329,7 +338,7 @@ export class DataDrivenBankingAnalyzer {
     
     if (assetUtilization > 90) {
       return {
-        text: `Very high asset utilization (${assetUtilization.toFixed(1)}%) - limited liquidity buffer`,
+        text: `${assetUtilization.toFixed(1)}% utilization - liquidity risk`,
         priority: 'MEDIUM',
         type: 'risk_analysis',
         confidence: 0.8,
@@ -341,7 +350,7 @@ export class DataDrivenBankingAnalyzer {
     
     if (debtToIncomeRatio > 0.5) {
       return {
-        text: `High debt burden (${(debtToIncomeRatio * 100).toFixed(1)}%) - debt reduction priority`,
+        text: `${(debtToIncomeRatio * 100).toFixed(1)}% debt - reduction priority`,
         priority: 'HIGH',
         type: 'risk_analysis',
         confidence: 0.8,
@@ -459,7 +468,8 @@ export class DataDrivenBankingAnalyzer {
     
     if (weeklyTransactions >= 7) {
       return {
-        text: `Customer makes at least ${weeklyTransactions} transactions per week - high engagement opportunity`,
+        insight: `${weeklyTransactions} transactions per week`,
+        reasoning: `Total of ${totalTransactions} transactions in analysis period`,
         priority: 'HIGH',
         type: 'transaction_frequency',
         confidence: 0.9,
@@ -473,7 +483,8 @@ export class DataDrivenBankingAnalyzer {
     const avgTransactionAmount = this.calculateAverageTransactionAmount(transactions);
     if (avgTransactionAmount > 5000) {
       return {
-        text: `High-value transactions averaging RM${this.formatCurrency(avgTransactionAmount)} - premium service candidate`,
+        insight: `RM${this.formatCurrency(avgTransactionAmount)} average transaction amount`,
+        reasoning: `High-value transaction pattern detected`,
         priority: 'HIGH',
         type: 'transaction_value',
         confidence: 0.8,
@@ -613,10 +624,11 @@ export class DataDrivenBankingAnalyzer {
     // Generate insights based on real data
     const insights = [];
 
-    // Dining pattern insight
-    if (diningFrequency >= 7) {
+    // Dining pattern insight - only for significant spending
+    if (diningSpending > 2000) { // Only show if spending > RM2,000
       insights.push({
-        text: `Customer dines out at least ${Math.round(diningFrequency)} times per week - dining rewards opportunity`,
+        insight: `RM${this.formatCurrency(diningSpending)} on dining (high lifestyle)`,
+        reasoning: `${Math.round(diningFrequency)} dining transactions per week`,
         priority: 'HIGH',
         type: 'dining_pattern',
         confidence: 0.9,
@@ -626,18 +638,21 @@ export class DataDrivenBankingAnalyzer {
       });
     }
 
-    // Grocery preference insight
+    // Grocery preference insight - only for premium stores or high spending
     if (preferredGrocery && grocerySpending > 0) {
       const isPremiumGrocery = ['jaya grocer', 'cold storage', 'village grocer'].includes(preferredGrocery.toLowerCase());
-      insights.push({
-        text: `Customer primarily shops at ${preferredGrocery} - ${isPremiumGrocery ? 'premium' : 'standard'} grocery rewards opportunity`,
-        priority: isPremiumGrocery ? 'MEDIUM' : 'LOW',
-        type: 'grocery_preference',
-        confidence: 0.8,
-        products: ['Grocery Credit Card', 'Cashback Program', 'Loyalty Program'],
-        estimatedValue: Math.round(grocerySpending * 0.1), // 10% of grocery spending
-        dataPoints: { preferredGrocery, grocerySpending }
-      });
+      if (isPremiumGrocery || grocerySpending > 1500) { // Only show for premium stores or high spending
+        insights.push({
+          insight: `RM${this.formatCurrency(grocerySpending)} at ${preferredGrocery}${isPremiumGrocery ? ' (premium)' : ''}`,
+          reasoning: `Primary grocery store with ${groceryTransactions.length} transactions`,
+          priority: isPremiumGrocery ? 'MEDIUM' : 'LOW',
+          type: 'grocery_preference',
+          confidence: 0.8,
+          products: ['Grocery Credit Card', 'Cashback Program', 'Loyalty Program'],
+          estimatedValue: Math.round(grocerySpending * 0.1), // 10% of grocery spending
+          dataPoints: { preferredGrocery, grocerySpending }
+        });
+      }
     }
 
     // Fuel preference insight
@@ -1000,7 +1015,8 @@ export class DataDrivenBankingAnalyzer {
     
     const insights = [
       {
-        text: `${(dataPoints.cashRatio * 100).toFixed(1)}% cash reserves - investment opportunity`,
+        insight: `${(dataPoints.cashRatio * 100).toFixed(1)}% cash - invest opportunity`,
+        reasoning: `High cash ratio of ${(dataPoints.cashRatio * 100).toFixed(1)}% indicates unused funds`,
         priority: 'MEDIUM',
         type: 'cash_flow_analysis',
         confidence: 0.7,
@@ -1009,7 +1025,8 @@ export class DataDrivenBankingAnalyzer {
         dataPoints: { cashRatio: dataPoints.cashRatio }
       },
       {
-        text: `${(dataPoints.debtToIncomeRatio * 100).toFixed(1)}% debt ratio - ${dataPoints.debtToIncomeRatio < 0.3 ? 'excellent' : dataPoints.debtToIncomeRatio < 0.5 ? 'good' : 'needs attention'} credit profile`,
+        insight: `${(dataPoints.debtToIncomeRatio * 100).toFixed(1)}% debt ratio - ${dataPoints.debtToIncomeRatio < 0.3 ? 'excellent' : dataPoints.debtToIncomeRatio < 0.5 ? 'good' : 'needs attention'}`,
+        reasoning: `Debt-to-income ratio of ${(dataPoints.debtToIncomeRatio * 100).toFixed(1)}% shows ${dataPoints.debtToIncomeRatio < 0.3 ? 'strong' : dataPoints.debtToIncomeRatio < 0.5 ? 'manageable' : 'concerning'} credit health`,
         priority: 'MEDIUM',
         type: 'credit_analysis',
         confidence: 0.6,
@@ -1018,7 +1035,8 @@ export class DataDrivenBankingAnalyzer {
         dataPoints: { debtToIncomeRatio: dataPoints.debtToIncomeRatio }
       },
       {
-        text: `Net worth RM${this.formatCurrency(dataPoints.netWorth)} - ${dataPoints.netWorth > 500000 ? 'high net worth' : dataPoints.netWorth > 100000 ? 'moderate wealth' : 'building wealth'} client`,
+        insight: `RM${this.formatCurrency(dataPoints.netWorth)} net worth - ${dataPoints.netWorth > 500000 ? 'high value' : dataPoints.netWorth > 100000 ? 'moderate' : 'building'} client`,
+        reasoning: `Total net worth of RM${this.formatCurrency(dataPoints.netWorth)} indicates ${dataPoints.netWorth > 500000 ? 'premium' : dataPoints.netWorth > 100000 ? 'growth' : 'foundation'} segment`,
         priority: 'LOW',
         type: 'wealth_analysis',
         confidence: 0.5,
@@ -1027,7 +1045,8 @@ export class DataDrivenBankingAnalyzer {
         dataPoints: { netWorth: dataPoints.netWorth }
       },
       {
-        text: `RM${this.formatCurrency(dataPoints.avgCashflow)}/month cash flow - ${dataPoints.avgCashflow > 8000 ? 'strong' : 'steady'} income pattern`,
+        insight: `RM${this.formatCurrency(dataPoints.avgCashflow)}/month - ${dataPoints.avgCashflow > 8000 ? 'strong' : 'steady'} income`,
+        reasoning: `Monthly cash flow of RM${this.formatCurrency(dataPoints.avgCashflow)} shows ${dataPoints.avgCashflow > 8000 ? 'high' : 'stable'} earning capacity`,
         priority: 'LOW',
         type: 'behavior_analysis',
         confidence: 0.4,
@@ -1172,8 +1191,25 @@ function cleanArray(arr) {
   if (!Array.isArray(arr)) return [];
   
   return arr
-    .map(item => cleanText(item))
-    .filter(item => item && item.length > 0);
+    .map(item => {
+      // Handle new insight format with reasoning
+      if (item && typeof item === 'object' && item.insight && item.reasoning) {
+        return {
+          insight: cleanText(item.insight),
+          reasoning: cleanText(item.reasoning)
+        };
+      }
+      // Handle legacy string format
+      return cleanText(item);
+    })
+    .filter(item => {
+      if (typeof item === 'string') {
+        return item && item.length > 0;
+      } else if (item && typeof item === 'object') {
+        return item.insight && item.insight.length > 0;
+      }
+      return false;
+    });
 }
 
 // Helper function to process text response when JSON parsing fails
@@ -1229,13 +1265,12 @@ function processTextResponse(responseText) {
 }
 
 export async function analyzeClientWithGemini(clientProfile, transactions, followUp = '') {
-  // Import config for API key
-  const { config } = await import('../../config.js');
-  const GEMINI_API_KEY = config.GEMINI_API_KEY;
+  // Get API key from environment variable or use default
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY || 'AIzaSyCfC6H25UzpTR5cweS1iNHQ6tCSy2v3lLs';
   
   // Validate API key
   if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY_HERE') {
-    throw new Error('Gemini API key not configured. Please update your config.js file with a valid API key from https://makersuite.google.com/app/apikey');
+    throw new Error('Gemini API key not configured. Please set the GEMINI_API_KEY environment variable or update the default key in the code.');
   }
   // Use the latest supported Gemini model
   const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
@@ -1304,46 +1339,80 @@ export async function analyzeClientWithGemini(clientProfile, transactions, follo
   });
 
   // Create the prompt for Gemini
-  const basePrompt = `You are an expert banking AI assistant specializing in financial analysis and client insights. 
-
-Analyze the following comprehensive client data and provide the 3 MOST VALUABLE insights for banking relationship management:
+  const basePrompt = `You are an expert banking AI assistant. Analyze this client data and provide 3 CONCISE factual observations for quick client meetings.
 
 CLIENT DATA:
 ${JSON.stringify(clientDataForAnalysis, null, 2)}
 
-ANALYSIS REQUIREMENTS:
-1. Analyze ALL available data: transactions, financial profile, account balances, investments, liabilities, and behavioral patterns
-2. Focus on insights that drive banking opportunities: cross-selling, upselling, risk management, and customer retention
-3. Consider transaction patterns, spending behavior, financial health, investment potential, and credit opportunities
-4. If no transaction data exists, analyze the client's financial profile and suggest engagement strategies
+REQUIREMENTS:
+- Keep each insight under 15 words
+- Focus on SIGNIFICANT spending above normal levels
+- Show EXACT totals only (no explanatory text)
+- Highlight banking-relevant factors (credit risk, product gaps, client segments)
+- Show amounts that indicate premium lifestyle or high disposable income
+- Include risk factors, investment gaps, digital adoption patterns
+- Use EXACT amounts from transaction data - do not round or approximate
+- NO normal or average spending patterns
+- NO vague summaries or generic totals
+- NO promotional language or product recommendations in insights
 
-Please provide your analysis in the following EXACT JSON format (no additional text, just the JSON):
+Provide response in this EXACT JSON format:
 {
   "summary": [
-    "Key point 1 about the client's overall financial situation and banking potential",
-    "Key point 2 about their transaction behavior and financial activity patterns",
-    "Key point 3 about the biggest opportunity or risk for the bank"
+    "Brief financial overview",
+    "Key behavioral pattern", 
+    "Main opportunity/risk"
   ],
   "insights": [
-    "The single most valuable insight for banking relationship management based on all available data",
-    "The second most valuable insight focusing on revenue opportunities or risk mitigation",
-    "The third most valuable insight for customer engagement and product recommendations"
+    {
+      "insight": "Pure factual observation 1",
+      "reasoning": "Specific data point that supports this observation"
+    },
+    {
+      "insight": "Pure factual observation 2",
+      "reasoning": "Specific data point that supports this observation"
+    },
+    {
+      "insight": "Pure factual observation 3", 
+      "reasoning": "Specific data point that supports this observation"
+    }
   ],
   "recommendations": [
-    "The most actionable recommendation for the bank to increase revenue or reduce risk",
-    "The second most actionable recommendation for customer engagement and retention",
-    "The third most actionable recommendation for product development or service improvement"
+    "Product recommendation 1",
+    "Product recommendation 2",
+    "Product recommendation 3"
   ]
 }
 
-PRIORITY CRITERIA FOR INSIGHTS:
-- Revenue generation potential (cross-selling, upselling opportunities)
-- Risk management (credit risk, fraud risk, customer churn risk)
-- Customer engagement and retention strategies
-- Product utilization and optimization opportunities
-- Market positioning and competitive advantages
+INSIGHTS SHOULD BE SIGNIFICANT TOTALS LIKE:
+- "RM830 on Grab"
+- "RM15,000 on luxury purchases"
+- "RM8,000 on travel"
+- "RM50,000 idle cash"
+- "85% credit utilization"
+- "No credit card usage"
+- "RM500K net worth"
+- "3 mobile logins/month"
+- "RM2,500/month dining"
+- "No investment products"
 
-Provide only the 3 BEST insights that would be most valuable for a banking relationship manager to act upon.`;
+AVOID IN INSIGHTS:
+- Explanatory text like "indicates high transport costs"
+- Normal spending amounts (RM500 on groceries, RM200 on fuel)
+- Vague summaries like "significant spending across multiple categories"
+- Generic totals like "total spending RM7,661.80"
+- "opportunity", "recommend", "should", "need", "consider"
+- Any promotional language
+- Any product suggestions
+- Product names or specific recommendations
+
+IMPORTANT: Use EXACT amounts from transaction data. Do not round, approximate, or aggregate amounts. Be precise:
+- Use exact transaction amounts: "RM450 and RM380 on Grab"
+- Use exact totals: "RM830 total on Grab"
+- Use exact transaction counts: "2 Grab transactions"
+- Use exact dates: "June 10 and June 17"
+- Do NOT round or approximate amounts
+- Do NOT use vague terms like "frequent", "often", "many", "several"`;
 
   const fullPrompt = followUp ? `${basePrompt}\n\nFOLLOW-UP QUESTION: ${followUp}\n\nPlease address this specific question in your analysis.` : basePrompt;
 
@@ -1420,12 +1489,16 @@ Provide only the 3 BEST insights that would be most valuable for a banking relat
       }
     }
 
+    console.log('Raw parsed response:', parsedResponse);
+    
     // Clean the parsed response to remove any remaining JSON formatting
     const cleanResponse = {
       summary: cleanArray(parsedResponse.summary || []),
       insights: cleanArray(parsedResponse.insights || []),
       recommendations: cleanArray(parsedResponse.recommendations || [])
     };
+
+    console.log('Clean response:', cleanResponse);
 
     return {
       ...cleanResponse,

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { FaLock, FaSave, FaArrowLeft } from 'react-icons/fa';
 import Sidebar from './Sidebar';
 import { supabase } from './supabaseClient';
+import { deleteAIInsights } from './utils/aiInsightsStorage';
 
 function validateNRIC(nric) {
   return /^\d{6}-\d{2}-\d{4}$/.test(nric);
@@ -283,6 +284,9 @@ export default function EditClientInfoNew() {
           loans: row.loans || 0
         });
       }
+
+      // Delete AI insights to force regeneration on next dashboard visit
+      await deleteAIInsights(paramNric);
 
       // Navigate back to dashboard
       navigate(`/dashboard/${paramNric}`, { state: { fromEdit: true } });
