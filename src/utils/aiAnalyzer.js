@@ -525,41 +525,196 @@ export class DataDrivenBankingAnalyzer {
 
   // Spending Pattern Analysis
   analyzeSpendingPatterns(dataPoints, clientData) {
-    // Simulate spending pattern data
-    const spendingData = {
-      groceryStores: ['Jaya Grocer', 'Tesco', 'Giant', 'AEON'],
-      preferredGrocery: 'Jaya Grocer',
-      diningFrequency: Math.floor(Math.random() * 7) + 3, // 3-10 times per week
-      fuelStations: ['Petronas', 'Shell', 'Caltex'],
-      preferredFuel: 'Petronas',
-      onlineShopping: Math.random() > 0.6, // 60% do online shopping
-      preferredOnline: Math.random() > 0.5 ? 'Shopee' : 'Lazada'
-    };
+    // Extract real transaction data
+    const transactions = clientData.transactions || [];
     
-    if (spendingData.diningFrequency >= 7) {
-      return {
-        text: `Customer dines out at least ${spendingData.diningFrequency} times per week - dining rewards opportunity`,
+    if (transactions.length === 0) {
+      return null; // No transaction data available
+    }
+
+    // Analyze grocery spending patterns
+    const groceryTransactions = transactions.filter(t => 
+      t.category && t.category.toLowerCase().includes('grocery') ||
+      t.description && (
+        t.description.toLowerCase().includes('grocery') ||
+        t.description.toLowerCase().includes('supermarket') ||
+        t.description.toLowerCase().includes('market')
+      )
+    );
+
+    // Analyze dining/restaurant spending
+    const diningTransactions = transactions.filter(t => 
+      t.category && t.category.toLowerCase().includes('dining') ||
+      t.description && (
+        t.description.toLowerCase().includes('restaurant') ||
+        t.description.toLowerCase().includes('cafe') ||
+        t.description.toLowerCase().includes('food') ||
+        t.description.toLowerCase().includes('dining')
+      )
+    );
+
+    // Analyze fuel/transportation spending
+    const fuelTransactions = transactions.filter(t => 
+      t.category && t.category.toLowerCase().includes('fuel') ||
+      t.description && (
+        t.description.toLowerCase().includes('petronas') ||
+        t.description.toLowerCase().includes('shell') ||
+        t.description.toLowerCase().includes('caltex') ||
+        t.description.toLowerCase().includes('fuel')
+      )
+    );
+
+    // Analyze online shopping
+    const onlineTransactions = transactions.filter(t => 
+      t.channel && t.channel.toLowerCase().includes('online') ||
+      t.description && (
+        t.description.toLowerCase().includes('shopee') ||
+        t.description.toLowerCase().includes('lazada') ||
+        t.description.toLowerCase().includes('amazon') ||
+        t.description.toLowerCase().includes('online')
+      )
+    );
+
+    // Calculate spending metrics
+    const grocerySpending = groceryTransactions.reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0);
+    const diningSpending = diningTransactions.reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0);
+    const fuelSpending = fuelTransactions.reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0);
+    const onlineSpending = onlineTransactions.reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0);
+
+    // Calculate dining frequency (transactions per week, assuming 30-day period)
+    const diningFrequency = diningTransactions.length * (7 / 30); // Convert to weekly frequency
+
+    // Analyze grocery store preferences
+    const groceryStores = {};
+    groceryTransactions.forEach(t => {
+      const storeName = this.extractStoreName(t.description);
+      if (storeName) {
+        groceryStores[storeName] = (groceryStores[storeName] || 0) + Math.abs(Number(t.amount));
+      }
+    });
+
+    const preferredGrocery = Object.keys(groceryStores).length > 0 
+      ? Object.entries(groceryStores).sort((a, b) => b[1] - a[1])[0][0]
+      : null;
+
+    // Analyze fuel station preferences
+    const fuelStations = {};
+    fuelTransactions.forEach(t => {
+      const stationName = this.extractStationName(t.description);
+      if (stationName) {
+        fuelStations[stationName] = (fuelStations[stationName] || 0) + Math.abs(Number(t.amount));
+      }
+    });
+
+    const preferredFuel = Object.keys(fuelStations).length > 0 
+      ? Object.entries(fuelStations).sort((a, b) => b[1] - a[1])[0][0]
+      : null;
+
+    // Generate insights based on real data
+    const insights = [];
+
+    // Dining pattern insight
+    if (diningFrequency >= 7) {
+      insights.push({
+        text: `Customer dines out at least ${Math.round(diningFrequency)} times per week - dining rewards opportunity`,
         priority: 'HIGH',
         type: 'dining_pattern',
         confidence: 0.9,
         products: ['Dining Credit Card', 'Restaurant Rewards', 'Cashback Program'],
-        estimatedValue: spendingData.diningFrequency * 50 * 52, // Weekly dining spend
-        dataPoints: { diningFrequency: spendingData.diningFrequency }
-      };
+        estimatedValue: Math.round(diningFrequency * 50 * 52), // Weekly dining spend
+        dataPoints: { diningFrequency: Math.round(diningFrequency), diningSpending }
+      });
     }
-    
-    if (spendingData.preferredGrocery === 'Jaya Grocer') {
-      return {
-        text: `Customer exclusively shops at Jaya Grocer - premium grocery rewards opportunity`,
-        priority: 'MEDIUM',
+
+    // Grocery preference insight
+    if (preferredGrocery && grocerySpending > 0) {
+      const isPremiumGrocery = ['jaya grocer', 'cold storage', 'village grocer'].includes(preferredGrocery.toLowerCase());
+      insights.push({
+        text: `Customer primarily shops at ${preferredGrocery} - ${isPremiumGrocery ? 'premium' : 'standard'} grocery rewards opportunity`,
+        priority: isPremiumGrocery ? 'MEDIUM' : 'LOW',
         type: 'grocery_preference',
         confidence: 0.8,
         products: ['Grocery Credit Card', 'Cashback Program', 'Loyalty Program'],
-        estimatedValue: 15000,
-        dataPoints: { preferredGrocery: spendingData.preferredGrocery }
-      };
+        estimatedValue: Math.round(grocerySpending * 0.1), // 10% of grocery spending
+        dataPoints: { preferredGrocery, grocerySpending }
+      });
     }
+
+    // Fuel preference insight
+    if (preferredFuel && fuelSpending > 0) {
+      insights.push({
+        text: `Customer primarily uses ${preferredFuel} - fuel rewards opportunity`,
+        priority: 'MEDIUM',
+        type: 'fuel_preference',
+        confidence: 0.8,
+        products: ['Fuel Credit Card', 'Cashback Program', 'Loyalty Program'],
+        estimatedValue: Math.round(fuelSpending * 0.05), // 5% of fuel spending
+        dataPoints: { preferredFuel, fuelSpending }
+      });
+    }
+
+    // Online shopping insight
+    if (onlineSpending > 0 && onlineTransactions.length > 0) {
+      insights.push({
+        text: `Customer shops online frequently (${onlineTransactions.length} transactions) - e-commerce rewards opportunity`,
+        priority: 'MEDIUM',
+        type: 'online_shopping',
+        confidence: 0.8,
+        products: ['Online Shopping Credit Card', 'Cashback Program', 'Digital Rewards'],
+        estimatedValue: Math.round(onlineSpending * 0.08), // 8% of online spending
+        dataPoints: { onlineSpending, onlineTransactionCount: onlineTransactions.length }
+      });
+    }
+
+    // Return the first insight if any found
+    return insights.length > 0 ? insights[0] : null;
+  }
+
+  // Helper method to extract store name from transaction description
+  extractStoreName(description) {
+    if (!description) return null;
     
+    const storePatterns = [
+      /jaya\s*grocer/i,
+      /cold\s*storage/i,
+      /village\s*grocer/i,
+      /tesco/i,
+      /giant/i,
+      /aeon/i,
+      /carrefour/i,
+      /lotus/i,
+      /mydin/i
+    ];
+
+    for (const pattern of storePatterns) {
+      const match = description.match(pattern);
+      if (match) {
+        return match[0];
+      }
+    }
+
+    return null;
+  }
+
+  // Helper method to extract fuel station name from transaction description
+  extractStationName(description) {
+    if (!description) return null;
+    
+    const stationPatterns = [
+      /petronas/i,
+      /shell/i,
+      /caltex/i,
+      /petron/i,
+      /bhp/i
+    ];
+
+    for (const pattern of stationPatterns) {
+      const match = description.match(pattern);
+      if (match) {
+        return match[0];
+      }
+    }
+
     return null;
   }
 
@@ -998,4 +1153,298 @@ export async function analyzeClientWithOpenAI(clientProfile, transactions) {
   };
 } 
 
-// Removed analyzeClientWithGemini and all Gemini API usage. Use Gemma via Ollama for any AI analysis. 
+// New function to get AI insights from Google Gemini API
+// Helper function to clean JSON formatting from text
+function cleanText(text) {
+  if (typeof text !== 'string') return text;
+  
+  // Remove JSON formatting characters
+  return text
+    .replace(/^["']|["']$/g, '') // Remove leading/trailing quotes
+    .replace(/^\[|\]$/g, '') // Remove leading/trailing brackets
+    .replace(/^,|,$/g, '') // Remove leading/trailing commas
+    .replace(/^"|"$/g, '') // Remove any remaining quotes
+    .trim();
+}
+
+// Helper function to clean an array of strings
+function cleanArray(arr) {
+  if (!Array.isArray(arr)) return [];
+  
+  return arr
+    .map(item => cleanText(item))
+    .filter(item => item && item.length > 0);
+}
+
+// Helper function to process text response when JSON parsing fails
+function processTextResponse(responseText) {
+  const lines = responseText.split('\n').filter(line => line.trim());
+  
+  // Try to find sections by looking for keywords
+  const summary = [];
+  const insights = [];
+  const recommendations = [];
+  
+  let currentSection = null;
+  
+  for (const line of lines) {
+    const cleanLine = line.trim();
+    
+    if (cleanLine.toLowerCase().includes('summary') || cleanLine.toLowerCase().includes('key point')) {
+      currentSection = 'summary';
+      continue;
+    } else if (cleanLine.toLowerCase().includes('insight')) {
+      currentSection = 'insights';
+      continue;
+    } else if (cleanLine.toLowerCase().includes('recommendation')) {
+      currentSection = 'recommendations';
+      continue;
+    }
+    
+    // Skip JSON formatting lines
+    if (cleanLine.match(/^[\[\]{}",\s]*$/)) continue;
+    
+    // Add content to appropriate section
+    const cleanedContent = cleanText(cleanLine);
+    if (cleanedContent && cleanedContent.length > 0) {
+      switch (currentSection) {
+        case 'summary':
+          summary.push(cleanedContent);
+          break;
+        case 'insights':
+          insights.push(cleanedContent);
+          break;
+        case 'recommendations':
+          recommendations.push(cleanedContent);
+          break;
+      }
+    }
+  }
+  
+  return {
+    summary: summary.slice(0, 3),
+    insights: insights.slice(0, 3),
+    recommendations: recommendations.slice(0, 3)
+  };
+}
+
+export async function analyzeClientWithGemini(clientProfile, transactions, followUp = '') {
+  // Import config for API key
+  const { config } = await import('../../config.js');
+  const GEMINI_API_KEY = config.GEMINI_API_KEY;
+  
+  // Validate API key
+  if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY_HERE') {
+    throw new Error('Gemini API key not configured. Please update your config.js file with a valid API key from https://makersuite.google.com/app/apikey');
+  }
+  // Use the latest supported Gemini model
+  const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+  
+  // Prepare the client data for analysis
+  const clientDataForAnalysis = {
+    client: {
+      name: clientProfile.name || clientProfile.client?.name || 'Unknown',
+      nric: clientProfile.nric || clientProfile.client?.nric || 'Unknown',
+      riskProfile: clientProfile.risk_profile || clientProfile.client?.riskProfile || 'Unknown',
+      status: clientProfile.status || clientProfile.client?.status || 'Unknown',
+      nationality: clientProfile.nationality || 'Unknown',
+      gender: clientProfile.gender || 'Unknown',
+      maritalStatus: clientProfile.marital_status || 'Unknown',
+      employmentStatus: clientProfile.employment_status || 'Unknown',
+      creditScore: clientProfile.credit_score || 'Unknown',
+      dsrRatio: clientProfile.dsr_ratio || 'Unknown'
+    },
+    financial: {
+      netWorth: clientProfile.net_worth || clientProfile.financial?.netWorth || 'RM 0',
+      assetUtilization: clientProfile.asset_utilization || clientProfile.financial?.assetUtilization || 0,
+      totalAssets: clientProfile.total_assets || 0,
+      totalLiabilities: clientProfile.total_liabilities || 0,
+      monthlyIncome: clientProfile.monthly_income || 0,
+      monthlyExpenses: clientProfile.monthly_expenses || 0
+    },
+    accountBalances: {
+      casa: clientProfile.casa_balance || clientProfile.dashboard?.accountBalances?.casa || 0,
+      fd: clientProfile.fd_balance || clientProfile.dashboard?.accountBalances?.fd || 0,
+      loans: clientProfile.loans_balance || clientProfile.dashboard?.accountBalances?.loans || 0,
+      cards: clientProfile.cards_balance || clientProfile.dashboard?.accountBalances?.cards || 0
+    },
+    investments: {
+      holdings: clientProfile.investments?.holdings || [],
+      totalInvestmentValue: clientProfile.total_investment_value || 0,
+      investmentDiversity: clientProfile.investment_diversity || 0
+    },
+    liabilities: {
+      liabilities: clientProfile.liabilities?.liabilities || [],
+      creditLines: clientProfile.liabilities?.creditLines || [],
+      totalDebt: clientProfile.total_debt || 0,
+      creditUtilization: clientProfile.credit_utilization || 0
+    },
+    behavioral: {
+      transactionFrequency: clientProfile.transaction_frequency || 0,
+      averageTransactionAmount: clientProfile.average_transaction_amount || 0,
+      preferredChannels: clientProfile.preferred_channels || [],
+      spendingCategories: clientProfile.spending_categories || []
+    },
+    transactions: transactions || [],
+    transactionSummary: {
+      totalTransactions: transactions ? transactions.length : 0,
+      totalSpent: transactions ? transactions.reduce((sum, t) => sum + Math.abs(t.amount || 0), 0) : 0,
+      averageAmount: transactions && transactions.length > 0 ? transactions.reduce((sum, t) => sum + Math.abs(t.amount || 0), 0) / transactions.length : 0,
+      categories: transactions ? [...new Set(transactions.map(t => t.category).filter(Boolean))] : [],
+      merchants: transactions ? [...new Set(transactions.map(t => t.description).filter(Boolean))] : []
+    }
+  };
+
+  console.log('Sending comprehensive client data to Gemini:', {
+    clientName: clientDataForAnalysis.client.name,
+    totalTransactions: clientDataForAnalysis.transactionSummary.totalTransactions,
+    totalSpent: clientDataForAnalysis.transactionSummary.totalSpent,
+    categories: clientDataForAnalysis.transactionSummary.categories,
+    accountBalances: clientDataForAnalysis.accountBalances
+  });
+
+  // Create the prompt for Gemini
+  const basePrompt = `You are an expert banking AI assistant specializing in financial analysis and client insights. 
+
+Analyze the following comprehensive client data and provide the 3 MOST VALUABLE insights for banking relationship management:
+
+CLIENT DATA:
+${JSON.stringify(clientDataForAnalysis, null, 2)}
+
+ANALYSIS REQUIREMENTS:
+1. Analyze ALL available data: transactions, financial profile, account balances, investments, liabilities, and behavioral patterns
+2. Focus on insights that drive banking opportunities: cross-selling, upselling, risk management, and customer retention
+3. Consider transaction patterns, spending behavior, financial health, investment potential, and credit opportunities
+4. If no transaction data exists, analyze the client's financial profile and suggest engagement strategies
+
+Please provide your analysis in the following EXACT JSON format (no additional text, just the JSON):
+{
+  "summary": [
+    "Key point 1 about the client's overall financial situation and banking potential",
+    "Key point 2 about their transaction behavior and financial activity patterns",
+    "Key point 3 about the biggest opportunity or risk for the bank"
+  ],
+  "insights": [
+    "The single most valuable insight for banking relationship management based on all available data",
+    "The second most valuable insight focusing on revenue opportunities or risk mitigation",
+    "The third most valuable insight for customer engagement and product recommendations"
+  ],
+  "recommendations": [
+    "The most actionable recommendation for the bank to increase revenue or reduce risk",
+    "The second most actionable recommendation for customer engagement and retention",
+    "The third most actionable recommendation for product development or service improvement"
+  ]
+}
+
+PRIORITY CRITERIA FOR INSIGHTS:
+- Revenue generation potential (cross-selling, upselling opportunities)
+- Risk management (credit risk, fraud risk, customer churn risk)
+- Customer engagement and retention strategies
+- Product utilization and optimization opportunities
+- Market positioning and competitive advantages
+
+Provide only the 3 BEST insights that would be most valuable for a banking relationship manager to act upon.`;
+
+  const fullPrompt = followUp ? `${basePrompt}\n\nFOLLOW-UP QUESTION: ${followUp}\n\nPlease address this specific question in your analysis.` : basePrompt;
+
+  try {
+    const response = await fetch(GEMINI_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: fullPrompt
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.3,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 2048,
+        },
+        safetySettings: [
+          {
+            category: "HARM_CATEGORY_HARASSMENT",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE"
+          },
+          {
+            category: "HARM_CATEGORY_HATE_SPEECH",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE"
+          },
+          {
+            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE"
+          },
+          {
+            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+            threshold: "BLOCK_MEDIUM_AND_ABOVE"
+          }
+        ]
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    
+    // Extract the response text
+    const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    
+    // Try to parse as JSON, fallback to text processing if it's not valid JSON
+    let parsedResponse;
+    try {
+      parsedResponse = JSON.parse(responseText);
+    } catch (parseError) {
+      // If JSON parsing fails, try to extract JSON from the response
+      console.warn('Failed to parse Gemini response as JSON, attempting to extract JSON:', parseError);
+      
+      // Try to find JSON content within the response
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        try {
+          parsedResponse = JSON.parse(jsonMatch[0]);
+        } catch (secondParseError) {
+          console.warn('Failed to parse extracted JSON:', secondParseError);
+          // Fallback to text processing
+          parsedResponse = processTextResponse(responseText);
+        }
+      } else {
+        // No JSON found, process as text
+        parsedResponse = processTextResponse(responseText);
+      }
+    }
+
+    // Clean the parsed response to remove any remaining JSON formatting
+    const cleanResponse = {
+      summary: cleanArray(parsedResponse.summary || []),
+      insights: cleanArray(parsedResponse.insights || []),
+      recommendations: cleanArray(parsedResponse.recommendations || [])
+    };
+
+    return {
+      ...cleanResponse,
+      followUpResponse: followUp ? responseText : undefined
+    };
+
+  } catch (error) {
+    console.error('Error calling Gemini API:', error);
+    
+    // Check if it's an API key issue
+    if (error.message.includes('API key') || error.message.includes('403') || error.message.includes('401')) {
+      throw new Error('Invalid or missing Gemini API key. Please check your config.js file and ensure you have a valid API key from https://makersuite.google.com/app/apikey');
+    }
+    
+    // Check if it's a network issue
+    if (error.message.includes('fetch') || error.message.includes('network')) {
+      throw new Error('Network error. Please check your internet connection and try again.');
+    }
+    
+    throw new Error(`Gemini API call failed: ${error.message}`);
+  }
+} 

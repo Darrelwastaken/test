@@ -1,6 +1,46 @@
-# Getting Started with Create React App
+# Banking AI Analysis System
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This project is a comprehensive banking analysis system that uses AI to provide financial insights and recommendations for banking clients.
+
+## Features
+
+- **AI-Powered Financial Analysis**: Uses Google Gemini API for intelligent financial insights
+- **Client Data Management**: Comprehensive client profile and transaction analysis
+- **Real-time Insights**: Generate actionable recommendations based on client data
+- **Interactive Follow-up**: Ask follow-up questions for deeper analysis
+
+## Setup
+
+### 1. Install Dependencies
+
+```bash
+npm install
+```
+
+### 2. Configure Gemini API
+
+To use the AI analysis features, you need to set up your Gemini API key:
+
+1. Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Create a new API key
+3. Open `config.js` in the root directory
+4. Replace `YOUR_GEMINI_API_KEY_HERE` with your actual API key:
+
+```javascript
+export const config = {
+  GEMINI_API_KEY: 'your_actual_api_key_here',
+};
+```
+
+### 3. Start the Development Server
+
+```bash
+npm start
+```
+
+The app will be available at [http://localhost:3000](http://localhost:3000)
+
+## Available Scripts
 
 ## Available Scripts
 

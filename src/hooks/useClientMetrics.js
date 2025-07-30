@@ -18,6 +18,7 @@ export const useClientMetrics = (clientId) => {
   const [calculated, setCalculated] = useState(null);
   const [behavioral, setBehavioral] = useState(null);
   const [trends, setTrends] = useState(null);
+  const [transactions, setTransactions] = useState([]);
 
   // Loading and Error States
   const [isLoading, setIsLoading] = useState(true);
@@ -108,7 +109,8 @@ export const useClientMetrics = (clientId) => {
           manualResult,
           calculatedResult,
           behavioralResult,
-          trendsResult
+          trendsResult,
+          transactionsResult
         ] = await Promise.all([
           // Manual input data
           supabase
@@ -137,14 +139,22 @@ export const useClientMetrics = (clientId) => {
             .select('*')
             .eq('client_nric', clientId)
             .order('month_year', { ascending: false })
-            .limit(12)
+            .limit(12),
+
+          // Transactions data
+          supabase
+            .from('transactions')
+            .select('*')
+            .eq('client_nric', clientId)
+            .order('transaction_date', { ascending: false })
         ]);
 
         console.log('New database structure responses:', {
           manual: manualResult,
           calculated: calculatedResult,
           behavioral: behavioralResult,
-          trends: trendsResult
+          trends: trendsResult,
+          transactions: transactionsResult
         });
 
         // Process manual input data
@@ -173,6 +183,14 @@ export const useClientMetrics = (clientId) => {
           setTrends(trendsResult.data);
         } else if (trendsResult.error && trendsResult.error.code !== 'PGRST116') {
           console.error('Trends data error:', trendsResult.error);
+        }
+
+        // Process transactions data
+        if (!transactionsResult.error && transactionsResult.data) {
+          setTransactions(transactionsResult.data);
+          console.log('Loaded transactions:', transactionsResult.data.length, 'transactions');
+        } else if (transactionsResult.error && transactionsResult.error.code !== 'PGRST116') {
+          console.error('Transactions data error:', transactionsResult.error);
         }
 
         setIsLoading(false);
@@ -211,6 +229,7 @@ export const useClientMetrics = (clientId) => {
     calculated,
     behavioral,
     trends,
+    transactions,
 
     // Loading and Error States
     isLoading,

@@ -61,6 +61,7 @@ export default function Dashboard({ user }) {
     calculated,
     behavioral,
     trends,
+    transactions,
     isLoading,
     error,
     refreshData
@@ -307,7 +308,7 @@ export default function Dashboard({ user }) {
           </div>
           {/* AI Insight Card (modular component) */}
           <div style={{ flex: 2 }}>
-            <AiAnalyzer clientData={client} />
+            <AiAnalyzer clientData={{ ...client, transactions }} />
           </div>
         </div>
 
