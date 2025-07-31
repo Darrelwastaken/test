@@ -152,7 +152,17 @@ export class DataDrivenBankingAnalyzer {
         type: 'emergency_fund_analysis',
         confidence: 0.95,
         estimatedValue: Math.max(10000, monthlyIncome * 3 - casaBalance),
-        dataPoints: { emergencyFundRatio, monthlyIncome, casaBalance }
+        dataPoints: { emergencyFundRatio, monthlyIncome, casaBalance },
+        recommendedProduct: {
+          id: 'ambank_goal_savings',
+          name: 'AmBank Goal Savings Account',
+          type: 'Savings',
+          description: 'Purpose-driven savings account with bonus interest for achieving savings goals',
+          reasoning: `Perfect for building your emergency fund with goal-based savings and bonus interest rates.`,
+          expectedReturn: '3.2%',
+          risk: 'Low',
+          minDeposit: 500
+        }
       };
     }
     
@@ -164,7 +174,17 @@ export class DataDrivenBankingAnalyzer {
         type: 'emergency_fund_analysis',
         confidence: 0.85,
         estimatedValue: monthlyIncome * 3 - casaBalance,
-        dataPoints: { emergencyFundRatio, monthlyIncome, casaBalance }
+        dataPoints: { emergencyFundRatio, monthlyIncome, casaBalance },
+        recommendedProduct: {
+          id: 'ambank_savings_account',
+          name: 'AmBank Savings Account',
+          type: 'Savings',
+          description: 'Basic savings account with competitive interest rates and easy access to funds',
+          reasoning: `Ideal for building your emergency fund with competitive rates and easy access when needed.`,
+          expectedReturn: '2.5%',
+          risk: 'Low',
+          minDeposit: 100
+        }
       };
     }
 
@@ -183,7 +203,17 @@ export class DataDrivenBankingAnalyzer {
         type: 'investment_opportunity',
         confidence: 0.9,
         estimatedValue: Math.min(casaBalance * 0.6, 100000),
-        dataPoints: { casaBalance, investmentRatio, age }
+        dataPoints: { casaBalance, investmentRatio, age },
+        recommendedProduct: {
+          id: 'ambank_unit_trust',
+          name: 'AmBank Unit Trust Funds',
+          type: 'Investment',
+          description: 'Professional managed unit trust funds with various risk profiles and investment objectives',
+          reasoning: `Perfect for diversifying your high cash reserves with professional fund management and various risk profiles.`,
+          expectedReturn: '6-15%',
+          risk: 'Medium-High',
+          minInvestment: 1000
+        }
       };
     }
     
@@ -195,7 +225,17 @@ export class DataDrivenBankingAnalyzer {
         type: 'investment_opportunity',
         confidence: 0.8,
         estimatedValue: monthlyIncome * 12,
-        dataPoints: { monthlyIncome, investmentRatio }
+        dataPoints: { monthlyIncome, investmentRatio },
+        recommendedProduct: {
+          id: 'ambank_structured_deposits',
+          name: 'AmBank Structured Deposits',
+          type: 'Investment',
+          description: 'Investment-linked deposits with potential for higher returns based on market performance',
+          reasoning: `Ideal for high-income earners seeking better returns than traditional savings with capital protection options.`,
+          expectedReturn: '4-8%',
+          risk: 'Medium',
+          minInvestment: 5000
+        }
       };
     }
 
@@ -214,7 +254,17 @@ export class DataDrivenBankingAnalyzer {
         type: 'credit_analysis',
         confidence: 0.9,
         estimatedValue: cardBalance,
-        dataPoints: { creditUtilization, cardBalance }
+        dataPoints: { creditUtilization, cardBalance },
+        recommendedProduct: {
+          id: 'ambank_personal_loan',
+          name: 'AmBank Personal Loan',
+          type: 'Credit',
+          description: 'Flexible personal financing for various needs with competitive interest rates',
+          reasoning: `Perfect for debt consolidation to reduce your high credit utilization and lower overall interest costs.`,
+          interestRate: '7.5-12%',
+          maxAmount: 'RM100,000',
+          minIncome: 2000
+        }
       };
     }
     
@@ -226,7 +276,17 @@ export class DataDrivenBankingAnalyzer {
         type: 'credit_analysis',
         confidence: 0.85,
         estimatedValue: monthlyIncome * 6,
-        dataPoints: { debtToIncomeRatio, monthlyIncome }
+        dataPoints: { debtToIncomeRatio, monthlyIncome },
+        recommendedProduct: {
+          id: 'ambank_credit_card',
+          name: 'AmBank Credit Cards',
+          type: 'Credit',
+          description: 'Range of credit cards with rewards, cashback, and travel benefits',
+          reasoning: `Consider a balance transfer card to consolidate high-interest debt and reduce your debt-to-income ratio.`,
+          annualFee: 'RM0-500',
+          creditLimit: 'RM5,000-50,000',
+          minIncome: 24000
+        }
       };
     }
     
@@ -238,7 +298,17 @@ export class DataDrivenBankingAnalyzer {
         type: 'credit_analysis',
         confidence: 0.8,
         estimatedValue: 5000,
-        dataPoints: { creditUtilization, monthlyIncome }
+        dataPoints: { creditUtilization, monthlyIncome },
+        recommendedProduct: {
+          id: 'ambank_premium_travel_card',
+          name: 'AmBank Premium Travel Card',
+          type: 'Credit',
+          description: 'Premium travel credit card with exclusive travel benefits and concierge services',
+          reasoning: `Your excellent credit profile qualifies you for premium travel benefits and exclusive concierge services.`,
+          annualFee: 'RM500',
+          creditLimit: 'RM20,000-100,000',
+          minIncome: 60000
+        }
       };
     }
 
@@ -262,7 +332,17 @@ export class DataDrivenBankingAnalyzer {
         type: 'insurance_needs',
         confidence: 0.9,
         estimatedValue: recommendedCoverage - currentCoverage,
-        dataPoints: { age, annualIncome, currentCoverage, recommendedCoverage }
+        dataPoints: { age, annualIncome, currentCoverage, recommendedCoverage },
+        recommendedProduct: {
+          id: 'ambank_life_insurance',
+          name: 'AmBank Life Insurance',
+          type: 'Insurance',
+          description: 'Comprehensive life insurance coverage with flexible premium options and riders',
+          reasoning: `Essential for protecting your family with coverage that matches your recommended RM${recommendedCoverage.toLocaleString()} protection.`,
+          monthlyPremium: 'RM50-200',
+          coverage: 'RM50,000-1,000,000',
+          ageRange: '18-65'
+        }
       };
     }
     
@@ -274,7 +354,17 @@ export class DataDrivenBankingAnalyzer {
         type: 'insurance_needs',
         confidence: 0.8,
         estimatedValue: recommendedCoverage - currentCoverage,
-        dataPoints: { age, currentCoverage, recommendedCoverage }
+        dataPoints: { age, currentCoverage, recommendedCoverage },
+        recommendedProduct: {
+          id: 'ambank_critical_illness',
+          name: 'AmBank Critical Illness Protection',
+          type: 'Insurance',
+          description: 'Financial protection against critical illnesses with comprehensive coverage',
+          reasoning: `Critical illness protection becomes more important at age ${age} to protect against medical expenses and income loss.`,
+          monthlyPremium: 'RM80-300',
+          coverage: 'RM100,000-500,000',
+          ageRange: '18-60'
+        }
       };
     }
 
@@ -293,7 +383,17 @@ export class DataDrivenBankingAnalyzer {
         type: 'wealth_management',
         confidence: 0.85,
         estimatedValue: totalAssets * 0.1,
-        dataPoints: { netWorth, age, totalAssets }
+        dataPoints: { netWorth, age, totalAssets },
+        recommendedProduct: {
+          id: 'ambank_structured_deposits',
+          name: 'AmBank Structured Deposits',
+          type: 'Investment',
+          description: 'Investment-linked deposits with potential for higher returns based on market performance',
+          reasoning: `Perfect for high net worth individuals seeking capital protection with market-linked returns for wealth preservation.`,
+          expectedReturn: '4-8%',
+          risk: 'Medium',
+          minInvestment: 5000
+        }
       };
     }
     
@@ -305,7 +405,17 @@ export class DataDrivenBankingAnalyzer {
         type: 'wealth_management',
         confidence: 0.8,
         estimatedValue: 50000,
-        dataPoints: { monthlyIncome, totalAssets }
+        dataPoints: { monthlyIncome, totalAssets },
+        recommendedProduct: {
+          id: 'ambank_premium_travel_card',
+          name: 'AmBank Premium Travel Card',
+          type: 'Credit',
+          description: 'Premium travel credit card with exclusive travel benefits and concierge services',
+          reasoning: `Your high income and assets qualify you for premium travel benefits and exclusive concierge services.`,
+          annualFee: 'RM500',
+          creditLimit: 'RM20,000-100,000',
+          minIncome: 60000
+        }
       };
     }
 
@@ -324,7 +434,17 @@ export class DataDrivenBankingAnalyzer {
         type: 'debt_management',
         confidence: 0.8,
         estimatedValue: loanBalance,
-        dataPoints: { debtToIncomeRatio, loanBalance }
+        dataPoints: { debtToIncomeRatio, loanBalance },
+        recommendedProduct: {
+          id: 'ambank_personal_loan',
+          name: 'AmBank Personal Loan',
+          type: 'Credit',
+          description: 'Flexible personal financing for various needs with competitive interest rates',
+          reasoning: `Refinance your high-interest debt with competitive rates to reduce your debt-to-income ratio.`,
+          interestRate: '7.5-12%',
+          maxAmount: 'RM100,000',
+          minIncome: 2000
+        }
       };
     }
     
@@ -336,7 +456,17 @@ export class DataDrivenBankingAnalyzer {
         type: 'debt_management',
         confidence: 0.9,
         estimatedValue: totalLiabilities,
-        dataPoints: { totalLiabilities, monthlyIncome }
+        dataPoints: { totalLiabilities, monthlyIncome },
+        recommendedProduct: {
+          id: 'ambank_credit_card',
+          name: 'AmBank Credit Cards',
+          type: 'Credit',
+          description: 'Range of credit cards with rewards, cashback, and travel benefits',
+          reasoning: `Use a balance transfer card to consolidate multiple debts into one lower-interest payment.`,
+          annualFee: 'RM0-500',
+          creditLimit: 'RM5,000-50,000',
+          minIncome: 24000
+        }
       };
     }
 
@@ -368,7 +498,17 @@ export class DataDrivenBankingAnalyzer {
           airlines: travelSpending.categories.airlines || 0,
           hotels: travelSpending.categories.hotels || 0
         },
-        productCategories: this.getProductCategoriesForTravel(travelSpending)
+        productCategories: this.getProductCategoriesForTravel(travelSpending),
+        recommendedProduct: {
+          id: 'ambank_travel_card',
+          name: 'AmBank Travel Credit Card',
+          type: 'Credit',
+          description: 'Specialized credit card for travel expenses with travel rewards and benefits',
+          reasoning: `Perfect for your RM${travelSpending.totalAmount.toLocaleString()} travel spending with no foreign transaction fees and travel rewards.`,
+          annualFee: 'RM200',
+          creditLimit: 'RM10,000-50,000',
+          minIncome: 36000
+        }
       };
     }
     
@@ -551,7 +691,17 @@ export class DataDrivenBankingAnalyzer {
         type: 'emergency_fund_analysis',
         confidence: 0.8,
         estimatedValue: dataPoints.monthlyIncome * 3 - dataPoints.casaBalance,
-        dataPoints: { emergencyFundRatio: dataPoints.emergencyFundRatio, monthlyIncome: dataPoints.monthlyIncome, casaBalance: dataPoints.casaBalance }
+        dataPoints: { emergencyFundRatio: dataPoints.emergencyFundRatio, monthlyIncome: dataPoints.monthlyIncome, casaBalance: dataPoints.casaBalance },
+        recommendedProduct: {
+          id: 'ambank_savings_account',
+          name: 'AmBank Savings Account',
+          type: 'Savings',
+          description: 'Basic savings account with competitive interest rates and easy access to funds',
+          reasoning: `Ideal for building your emergency fund with competitive rates and easy access when needed.`,
+          expectedReturn: '2.5%',
+          risk: 'Low',
+          minDeposit: 100
+        }
       });
     }
 
@@ -563,7 +713,17 @@ export class DataDrivenBankingAnalyzer {
         type: 'investment_opportunity',
         confidence: 0.7,
         estimatedValue: Math.min(dataPoints.casaBalance * 0.6, 100000),
-        dataPoints: { casaBalance: dataPoints.casaBalance, investmentRatio: dataPoints.investmentRatio }
+        dataPoints: { casaBalance: dataPoints.casaBalance, investmentRatio: dataPoints.investmentRatio },
+        recommendedProduct: {
+          id: 'ambank_unit_trust',
+          name: 'AmBank Unit Trust Funds',
+          type: 'Investment',
+          description: 'Professional managed unit trust funds with various risk profiles and investment objectives',
+          reasoning: `Perfect for diversifying your high cash reserves with professional fund management and various risk profiles.`,
+          expectedReturn: '6-15%',
+          risk: 'Medium-High',
+          minInvestment: 1000
+        }
       });
     }
 
@@ -575,7 +735,17 @@ export class DataDrivenBankingAnalyzer {
         type: 'credit_analysis',
         confidence: 0.8,
         estimatedValue: dataPoints.cardBalance,
-        dataPoints: { creditUtilization: dataPoints.creditUtilization, cardBalance: dataPoints.cardBalance }
+        dataPoints: { creditUtilization: dataPoints.creditUtilization, cardBalance: dataPoints.cardBalance },
+        recommendedProduct: {
+          id: 'ambank_personal_loan',
+          name: 'AmBank Personal Loan',
+          type: 'Credit',
+          description: 'Flexible personal financing for various needs with competitive interest rates',
+          reasoning: `Perfect for debt consolidation to reduce your high credit utilization and lower overall interest costs.`,
+          interestRate: '7.5-12%',
+          maxAmount: 'RM100,000',
+          minIncome: 2000
+        }
       });
     }
 
@@ -588,7 +758,17 @@ export class DataDrivenBankingAnalyzer {
         type: 'wealth_analysis',
         confidence: 0.5,
         estimatedValue: dataPoints.netWorth * 0.05,
-        dataPoints: { netWorth: dataPoints.netWorth }
+        dataPoints: { netWorth: dataPoints.netWorth },
+        recommendedProduct: {
+          id: 'ambank_structured_deposits',
+          name: 'AmBank Structured Deposits',
+          type: 'Investment',
+          description: 'Investment-linked deposits with potential for higher returns based on market performance',
+          reasoning: `Perfect for high net worth individuals seeking capital protection with market-linked returns for wealth preservation.`,
+          expectedReturn: '4-8%',
+          risk: 'Medium',
+          minInvestment: 5000
+        }
       });
     }
 

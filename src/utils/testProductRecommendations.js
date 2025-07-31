@@ -8,59 +8,70 @@ import {
 
 // Sample AmBank product catalog for testing
 const TEST_PRODUCT_CATALOG = {
-  savings: [
+  personal_banking: [
     {
-      id: 'ambank_savings_account',
+      id: 'ambank_amvault_savings',
       type: 'Savings',
-      name: 'AmBank Savings Account',
-      description: 'Basic savings account with competitive interest rates and easy access to funds',
+      name: 'AmVault Savings Account / Account‑i',
+      description: 'High-yield savings account with competitive interest rates and Islamic banking options',
       suitability: 'High',
-      expectedReturn: '2.5%',
+      expectedReturn: '3.0-4.2%',
       risk: 'Low',
       minDeposit: 100,
-      features: ['No monthly fees', 'Free ATM withdrawals', 'Online banking', 'Mobile app access'],
+      features: ['High interest rates', 'Islamic banking option', 'Online banking', 'Mobile app access', 'No monthly fees'],
       requirements: ['Minimum balance: RM100', 'Valid Malaysian ID', 'Age 18+']
     }
   ],
-  investment: [
+  cards: [
     {
-      id: 'ambank_unit_trust',
+      id: 'ambank_visa_debit',
+      type: 'Debit',
+      name: 'AmBank Visa Debit Card',
+      description: 'Debit card for cashless transactions and ATM withdrawals',
+      suitability: 'High',
+      annualFee: 'RM0-50',
+      features: ['Cashless payments', 'ATM withdrawals', 'Online shopping', 'Contactless payments'],
+      requirements: ['Savings/current account', 'Valid Malaysian ID', 'Age 18+']
+    }
+  ],
+  loans_financing: [
+    {
+      id: 'ambank_personal_financing',
+      type: 'Credit',
+      name: 'Personal Financing / Financing‑i',
+      description: 'Personal loan with flexible terms and Islamic financing option',
+      suitability: 'Medium',
+      interestRate: '7.5-12.0%',
+      maxAmount: 'RM100,000',
+      features: ['Flexible terms', 'Islamic option', 'Quick approval', 'No collateral'],
+      requirements: ['Stable income', 'Good credit history', 'DSR < 70%', 'Age 21-60']
+    }
+  ],
+  wealth_management: [
+    {
+      id: 'ambank_unit_trusts',
       type: 'Investment',
-      name: 'AmBank Unit Trust Funds',
-      description: 'Professional managed unit trust funds with various risk profiles and investment objectives',
+      name: 'Unit Trusts via AmInvest',
+      description: 'Professional managed unit trust funds with various risk profiles',
       suitability: 'Medium',
       expectedReturn: '6-15%',
       risk: 'Medium-High',
       minInvestment: 1000,
-      features: ['Professional fund management', 'Diversified portfolios', 'Regular income options', 'Systematic investment plans'],
-      requirements: ['Minimum investment: RM1,000', 'Risk assessment required', 'Regular contribution recommended']
+      features: ['Professional management', 'Diversified portfolios', 'Regular income options', 'Systematic investment'],
+      requirements: ['Minimum investment: RM1,000', 'Risk assessment', 'Regular contribution recommended']
     }
   ],
-  insurance: [
+  insurance_takaful: [
     {
-      id: 'ambank_life_insurance',
+      id: 'ambank_general_insurance',
       type: 'Insurance',
-      name: 'AmBank Life Insurance',
-      description: 'Comprehensive life insurance coverage with flexible premium options and riders',
+      name: 'General Insurance (vehicle, travel, personal accident, home, business)',
+      description: 'Comprehensive general insurance coverage for various needs',
       suitability: 'High',
-      monthlyPremium: 'RM50-200',
-      coverage: 'RM50,000-1,000,000',
-      features: ['Flexible premium payments', 'Multiple coverage options', 'Riders available', 'Cash value accumulation'],
-      requirements: ['Age 18-65', 'Medical underwriting', 'Regular premium payments', 'Good health']
-    }
-  ],
-  islamic: [
-    {
-      id: 'ambank_islamic_savings',
-      type: 'Islamic',
-      name: 'AmBank Islamic Savings Account',
-      description: 'Shariah-compliant savings account with profit sharing and no interest',
-      suitability: 'High',
-      expectedReturn: '2.8%',
-      risk: 'Low',
-      minDeposit: 100,
-      features: ['Shariah-compliant', 'Profit sharing', 'No interest', 'Ethical banking', 'Online banking'],
-      requirements: ['Minimum balance: RM100', 'Valid Malaysian ID', 'Age 18+', 'Shariah compliance preference']
+      monthlyPremium: 'RM50-500',
+      coverage: 'RM50,000-2,000,000',
+      features: ['Vehicle insurance', 'Travel insurance', 'Personal accident', 'Home insurance', 'Business insurance'],
+      requirements: ['Valid Malaysian ID', 'Age 18-70', 'Insurance needs assessment', 'Premium payments']
     }
   ]
 };

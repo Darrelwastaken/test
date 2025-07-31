@@ -26,7 +26,7 @@ export const useAIProductRecommendations = (clientNric) => {
         setError(null);
 
         // Fetch AI insights and client data in parallel
-        const [aiInsightsResult, clientResult, manualResult, calculatedResult] = await Promise.all([
+        const [aiInsightsResult, clientResult, manualResult, calculatedResult, transactionsResult] = await Promise.all([
           getAIInsights(clientNric),
           supabase
             .from('clients')
@@ -42,14 +42,88 @@ export const useAIProductRecommendations = (clientNric) => {
             .from('calculated_financial_data')
             .select('*')
             .eq('client_nric', clientNric)
-            .single()
+            .single(),
+          supabase
+            .from('transactions')
+            .select('*')
+            .eq('client_nric', clientNric)
+            .order('transaction_date', { ascending: false })
+            .limit(100)
         ]);
 
         // Handle missing data gracefully
         const client = clientResult.data || {};
         const manual = manualResult.data || {};
         const calculated = calculatedResult.data || {};
-        const insights = aiInsightsResult?.insights || [];
+        const transactions = transactionsResult.data || [];
+        let insights = aiInsightsResult?.insights || [];
+
+        // Debug logging
+        console.log('Product Recommendations - AI Insights Result:', {
+          aiInsightsResult,
+          insightsCount: insights.length,
+          hasInsights: !!insights.length,
+          transactionCount: transactions.length
+        });
+
+        // If no insights from database, try to generate them
+        if (!insights || insights.length === 0) {
+          console.log('No AI insights found in database, attempting to generate...');
+          try {
+            const { generateAndSaveInsights } = await import('../utils/aiInsightsStorage');
+            const clientData = {
+              nric: clientNric,
+              client: client,
+              dashboard: {
+                assets: calculated.total_assets || 0,
+                cashflow: manual.monthly_inflow || 0,
+                accountBalances: {
+                  casa: manual.casa_balance || 0,
+                  fd: manual.fixed_deposit_value || 0,
+                  loans: calculated.total_liabilities || 0,
+                  cards: 0
+                }
+              },
+              financial: {
+                netWorth: calculated.net_position || 0,
+                monthlyIncome: manual.monthly_inflow || 0,
+                assetUtilization: calculated.utilization_rate || 0
+              },
+              investments: {
+                totalValue: manual.investment_portfolio_value || 0,
+                holdings: []
+              },
+              transactions: transactions
+            };
+            
+            const result = await generateAndSaveInsights(clientData);
+            insights = result?.insights || [];
+            console.log('Generated insights:', insights);
+          } catch (genError) {
+            console.error('Error generating insights:', genError);
+            // Use fallback insights
+            insights = [
+              {
+                insight: "Financial profile analyzed - banking data available",
+                reasoning: "Based on your financial data, we've identified opportunities for wealth optimization and risk management.",
+                priority: 'MEDIUM',
+                type: 'wealth_analysis',
+                confidence: 0.7,
+                estimatedValue: 10000,
+                recommendedProduct: {
+                  id: 'ambank_savings_account',
+                  name: 'AmBank Savings Account',
+                  type: 'Savings',
+                  description: 'Basic savings account with competitive interest rates and easy access to funds',
+                  reasoning: 'A good starting point for financial planning with competitive rates.',
+                  expectedReturn: '2.5%',
+                  risk: 'Low',
+                  minDeposit: 100
+                }
+              }
+            ];
+          }
+        }
 
         setAiInsights(insights);
 
@@ -105,29 +179,21 @@ export const useAIProductRecommendations = (clientNric) => {
 function generateRecommendationsFromAIInsights(insights, clientData, riskProfile, investmentProfile) {
   const recommendations = [];
   
-      // Map AI insight types to specific products
-    insights.forEach((insight, index) => {
-      const insightType = insight.type || 'general';
-      const priority = insight.priority || 'MEDIUM';
-      const estimatedValue = insight.estimatedValue || 10000;
-      const productCategories = insight.productCategories || [];
-      
-      // Get products based on insight type and product categories
-      const products = getProductsForInsightType(insightType, clientData, riskProfile, productCategories);
-      
-      products.forEach(product => {
-        recommendations.push({
-          ...product,
-          priority: mapPriority(priority),
-          reasoning: insight.insight || insight.reasoning || `Based on AI analysis: ${insightType}`,
-          estimatedValue: calculateEstimatedValue(product, clientData),
-          aiInsightIndex: index,
-          confidence: insight.confidence || 0.7
-        });
+  // Use recommended products from AI insights
+  insights.forEach((insight, index) => {
+    if (insight.recommendedProduct) {
+      recommendations.push({
+        ...insight.recommendedProduct,
+        priority: mapPriority(insight.priority || 'MEDIUM'),
+        reasoning: insight.reasoning || insight.insight || `Based on AI analysis: ${insight.type}`,
+        estimatedValue: insight.estimatedValue || calculateEstimatedValue(insight.recommendedProduct, clientData),
+        aiInsightIndex: index,
+        confidence: insight.confidence || 0.7
       });
-    });
+    }
+  });
 
-  // If no AI insights, generate basic recommendations
+  // If no AI insights with recommended products, generate basic recommendations
   if (recommendations.length === 0) {
     return generateBasicRecommendations(clientData, riskProfile, investmentProfile);
   }
@@ -470,242 +536,596 @@ function analyzeBasicTravelSpending(transactions) {
 // Get the product catalog (same as in the main hook)
 function getProductCatalog() {
   return {
-    savings: [
+    personal_banking: [
       {
-        id: 'ambank_savings_account',
+        id: 'ambank_amvault_savings',
         type: 'Savings',
-        name: 'AmBank Savings Account',
-        description: 'Basic savings account with competitive interest rates and easy access to funds',
+        name: 'AmVault Savings Account / Account‑i',
+        description: 'High-yield savings account with competitive interest rates and Islamic banking options',
         suitability: 'High',
-        expectedReturn: '2.5%',
+        expectedReturn: '3.0-4.2%',
         risk: 'Low',
         minDeposit: 100,
-        features: ['No monthly fees', 'Free ATM withdrawals', 'Online banking', 'Mobile app access'],
+        features: ['High interest rates', 'Islamic banking option', 'Online banking', 'Mobile app access', 'No monthly fees'],
         requirements: ['Minimum balance: RM100', 'Valid Malaysian ID', 'Age 18+']
       },
-             {
-         id: 'ambank_goal_savings',
-         type: 'Savings',
-         name: 'AmBank Goal Savings Account',
-         description: 'Purpose-driven savings account with bonus interest for achieving savings goals',
-         suitability: 'High',
-         expectedReturn: '3.2%',
-         risk: 'Low',
-         minDeposit: 500,
-         features: ['Goal-based savings', 'Bonus interest rates', 'No monthly fees', 'Easy goal tracking'],
-         requirements: ['Minimum balance: RM500', 'Monthly deposit commitment', 'Goal setting required']
-       },
-       {
-         id: 'ambank_multi_currency_account',
-         type: 'Savings',
-         name: 'AmBank Multi-Currency Account',
-         description: 'Savings account that supports multiple currencies for international transactions',
-         suitability: 'Medium',
-         expectedReturn: '2.0-4.5%',
-         risk: 'Low',
-         minDeposit: 1000,
-         features: ['Multiple currency support', 'Competitive exchange rates', 'International transfers', 'Online currency trading', 'No foreign transaction fees'],
-         requirements: ['Minimum balance: RM1,000', 'Valid Malaysian ID', 'Age 18+', 'International banking needs']
-       }
-     ],
-    investment: [
       {
-        id: 'ambank_unit_trust',
-        type: 'Investment',
-        name: 'AmBank Unit Trust Funds',
-        description: 'Professional managed unit trust funds with various risk profiles and investment objectives',
-        suitability: 'Medium',
-        expectedReturn: '6-15%',
-        risk: 'Medium-High',
-        minInvestment: 1000,
-        features: ['Professional fund management', 'Diversified portfolios', 'Regular income options', 'Systematic investment plans'],
-        requirements: ['Minimum investment: RM1,000', 'Risk assessment required', 'Regular contribution recommended']
+        id: 'ambank_true_savers',
+        type: 'Savings',
+        name: 'TRUE Savers Account / Account‑i',
+        description: 'Savings account with bonus interest for regular deposits and Islamic banking option',
+        suitability: 'High',
+        expectedReturn: '2.8-3.8%',
+        risk: 'Low',
+        minDeposit: 100,
+        features: ['Bonus interest rates', 'Islamic banking option', 'Regular deposit rewards', 'No monthly fees'],
+        requirements: ['Minimum balance: RM100', 'Monthly deposit commitment', 'Valid Malaysian ID']
       },
       {
-        id: 'ambank_structured_deposits',
-        type: 'Investment',
-        name: 'AmBank Structured Deposits',
-        description: 'Investment-linked deposits with potential for higher returns based on market performance',
+        id: 'ambank_basic_savings',
+        type: 'Savings',
+        name: 'Basic Savings Account / Account‑i',
+        description: 'Traditional savings account with basic banking services and Islamic option',
+        suitability: 'High',
+        expectedReturn: '2.0-2.5%',
+        risk: 'Low',
+        minDeposit: 100,
+        features: ['Basic banking services', 'Islamic banking option', 'ATM access', 'Online banking'],
+        requirements: ['Minimum balance: RM100', 'Valid Malaysian ID', 'Age 18+']
+      },
+      {
+        id: 'ambank_amwafeeq',
+        type: 'Savings',
+        name: 'AmWafeeq Account‑i',
+        description: 'Islamic savings account with profit sharing and Shariah-compliant banking',
+        suitability: 'High',
+        expectedReturn: '2.5-3.5%',
+        risk: 'Low',
+        minDeposit: 100,
+        features: ['Shariah-compliant', 'Profit sharing', 'Islamic banking', 'No interest', 'Ethical banking'],
+        requirements: ['Minimum balance: RM100', 'Valid Malaysian ID', 'Shariah compliance preference']
+      },
+      {
+        id: 'ambank_eflex_savings',
+        type: 'Savings',
+        name: 'eFlex Savings Account‑i',
+        description: 'Flexible savings account with Islamic banking and digital features',
+        suitability: 'High',
+        expectedReturn: '2.8-3.2%',
+        risk: 'Low',
+        minDeposit: 100,
+        features: ['Flexible banking', 'Islamic option', 'Digital features', 'Online banking'],
+        requirements: ['Minimum balance: RM100', 'Valid Malaysian ID', 'Age 18+']
+      },
+      {
+        id: 'ambank_amgenius',
+        type: 'Savings',
+        name: 'AmGenius',
+        description: 'Smart savings account with innovative features and rewards',
         suitability: 'Medium',
-        expectedReturn: '4-8%',
+        expectedReturn: '3.2-4.0%',
+        risk: 'Low',
+        minDeposit: 500,
+        features: ['Smart features', 'Rewards program', 'Digital banking', 'Innovative tools'],
+        requirements: ['Minimum balance: RM500', 'Valid Malaysian ID', 'Age 18+']
+      },
+      {
+        id: 'ambank_savers_gang',
+        type: 'Savings',
+        name: 'Savers\' G.A.N.G. (for children)',
+        description: 'Children\'s savings account with educational features and parental controls',
+        suitability: 'High',
+        expectedReturn: '2.5-3.0%',
+        risk: 'Low',
+        minDeposit: 50,
+        features: ['Children\'s banking', 'Educational features', 'Parental controls', 'Savings goals'],
+        requirements: ['Parent/guardian account', 'Child\'s birth certificate', 'Age 0-18']
+      },
+      {
+        id: 'ambank_current_account',
+        type: 'Current',
+        name: 'Current Account / Account‑i',
+        description: 'Transaction account for daily banking needs with Islamic option',
+        suitability: 'High',
+        expectedReturn: '0.5-1.0%',
+        risk: 'Low',
+        minDeposit: 100,
+        features: ['Daily transactions', 'Islamic option', 'Checkbook facility', 'Online banking'],
+        requirements: ['Minimum balance: RM100', 'Valid Malaysian ID', 'Age 18+']
+      },
+      {
+        id: 'ambank_foreign_currency',
+        type: 'Current',
+        name: 'Foreign Currency Accounts / Account‑i',
+        description: 'Multi-currency accounts for international transactions and Islamic banking',
+        suitability: 'Medium',
+        expectedReturn: '1.0-3.5%',
         risk: 'Medium',
-        minInvestment: 5000,
-        features: ['Capital protection options', 'Market-linked returns', 'Flexible tenures', 'Regular income'],
-        requirements: ['Minimum investment: RM5,000', 'Understanding of structured products', 'Risk tolerance assessment']
+        minDeposit: 1000,
+        features: ['Multiple currencies', 'Islamic option', 'International transfers', 'Competitive rates'],
+        requirements: ['Minimum balance: RM1,000 equivalent', 'Valid Malaysian ID', 'International needs']
       },
       {
-        id: 'ambank_fixed_deposit',
+        id: 'ambank_hybrid_current',
+        type: 'Current',
+        name: 'Hybrid Current Account‑i',
+        description: 'Combined current and savings features with Islamic banking',
+        suitability: 'High',
+        expectedReturn: '1.5-2.5%',
+        risk: 'Low',
+        minDeposit: 500,
+        features: ['Hybrid features', 'Islamic banking', 'Savings benefits', 'Transaction flexibility'],
+        requirements: ['Minimum balance: RM500', 'Valid Malaysian ID', 'Age 18+']
+      },
+      {
+        id: 'ambank_term_deposit',
         type: 'Investment',
-        name: 'AmBank Fixed Deposit',
-        description: 'Secure fixed deposit with guaranteed returns and flexible tenures',
+        name: 'Term Deposit / Term Deposit‑i',
+        description: 'Fixed-term deposits with guaranteed returns and Islamic option',
         suitability: 'Medium',
-        expectedReturn: '3.8%',
+        expectedReturn: '3.5-5.0%',
         risk: 'Low',
         minDeposit: 1000,
-        features: ['Guaranteed returns', 'Flexible tenures (1-60 months)', 'Competitive rates', 'Auto-renewal option'],
+        features: ['Guaranteed returns', 'Islamic option', 'Flexible tenures', 'Competitive rates'],
         requirements: ['Minimum deposit: RM1,000', 'Valid Malaysian ID', 'Age 18+']
+      },
+      {
+        id: 'ambank_amquantum_term',
+        type: 'Investment',
+        name: 'AmQuantum Term Deposit‑i',
+        description: 'Quantum-based term deposit with enhanced returns and Islamic banking',
+        suitability: 'Medium',
+        expectedReturn: '4.0-5.5%',
+        risk: 'Low',
+        minDeposit: 5000,
+        features: ['Quantum features', 'Islamic banking', 'Enhanced returns', 'Flexible tenures'],
+        requirements: ['Minimum deposit: RM5,000', 'Valid Malaysian ID', 'Age 18+']
+      },
+      {
+        id: 'ambank_afhdal_term',
+        type: 'Investment',
+        name: 'Afhdal Term Deposit‑i',
+        description: 'Premium term deposit with best rates and Islamic banking',
+        suitability: 'Medium',
+        expectedReturn: '4.5-6.0%',
+        risk: 'Low',
+        minDeposit: 10000,
+        features: ['Premium rates', 'Islamic banking', 'Best returns', 'Priority service'],
+        requirements: ['Minimum deposit: RM10,000', 'Valid Malaysian ID', 'Age 18+']
+      },
+      {
+        id: 'ambank_amtdplus',
+        type: 'Investment',
+        name: 'AmTDPlus‑i',
+        description: 'Enhanced term deposit with additional benefits and Islamic banking',
+        suitability: 'Medium',
+        expectedReturn: '4.2-5.8%',
+        risk: 'Low',
+        minDeposit: 5000,
+        features: ['Enhanced benefits', 'Islamic banking', 'Additional features', 'Flexible options'],
+        requirements: ['Minimum deposit: RM5,000', 'Valid Malaysian ID', 'Age 18+']
       }
     ],
-    insurance: [
+    cards: [
       {
-        id: 'ambank_life_insurance',
-        type: 'Insurance',
-        name: 'AmBank Life Insurance',
-        description: 'Comprehensive life insurance coverage with flexible premium options and riders',
+        id: 'ambank_visa_debit',
+        type: 'Debit',
+        name: 'AmBank Visa Debit Card',
+        description: 'Debit card for cashless transactions and ATM withdrawals',
         suitability: 'High',
-        monthlyPremium: 'RM50-200',
-        coverage: 'RM50,000-1,000,000',
-        features: ['Flexible premium payments', 'Multiple coverage options', 'Riders available', 'Cash value accumulation'],
-        requirements: ['Age 18-65', 'Medical underwriting', 'Regular premium payments', 'Good health']
+        annualFee: 'RM0-50',
+        features: ['Cashless payments', 'ATM withdrawals', 'Online shopping', 'Contactless payments'],
+        requirements: ['Savings/current account', 'Valid Malaysian ID', 'Age 18+']
       },
       {
-        id: 'ambank_critical_illness',
-        type: 'Insurance',
-        name: 'AmBank Critical Illness Protection',
-        description: 'Financial protection against critical illnesses with comprehensive coverage',
-        suitability: 'Medium',
-        monthlyPremium: 'RM80-300',
-        coverage: 'RM100,000-500,000',
-        features: ['Covers 36+ critical illnesses', 'Lump sum payout', 'Survival period benefits', 'Premium waiver options'],
-        requirements: ['Age 18-60', 'Medical examination', 'Regular premium payments', 'No pre-existing conditions']
-      },
-             {
-         id: 'ambank_personal_accident',
-         type: 'Insurance',
-         name: 'AmBank Personal Accident Insurance',
-         description: 'Comprehensive accident coverage with worldwide protection and additional benefits',
-         suitability: 'Medium',
-         monthlyPremium: 'RM30-100',
-         coverage: 'RM50,000-200,000',
-         features: ['Worldwide coverage', '24/7 protection', 'Medical expenses coverage', 'Disability benefits'],
-         requirements: ['Age 18-65', 'Active lifestyle', 'Regular premium payments', 'No hazardous occupations']
-       },
-       {
-         id: 'ambank_travel_insurance',
-         type: 'Insurance',
-         name: 'AmBank Travel Insurance',
-         description: 'Comprehensive travel insurance with worldwide coverage and emergency assistance',
-         suitability: 'High',
-         monthlyPremium: 'RM50-150',
-         coverage: 'RM100,000-500,000',
-         features: ['Worldwide coverage', 'Emergency medical assistance', 'Trip cancellation', 'Baggage protection', '24/7 helpline'],
-         requirements: ['Age 18-70', 'Valid travel documents', 'Trip duration < 90 days', 'No pre-existing conditions']
-       }
-     ],
-    credit: [
-      {
-        id: 'ambank_personal_loan',
+        id: 'ambank_enrich_visa',
         type: 'Credit',
-        name: 'AmBank Personal Loan',
-        description: 'Flexible personal financing for various needs with competitive interest rates',
+        name: 'AmBank Enrich Visa Infinite & Platinum',
+        description: 'Premium credit cards with travel rewards and exclusive benefits',
+        suitability: 'Medium',
+        annualFee: 'RM200-800',
+        creditLimit: 'RM20,000-100,000',
+        features: ['Travel rewards', 'Airport lounge access', 'Travel insurance', 'Premium benefits'],
+        requirements: ['Annual income: RM60,000+', 'Excellent credit score', 'Age 21-65']
+      },
+      {
+        id: 'ambank_visa_series',
+        type: 'Credit',
+        name: 'Visa Infinite, Visa Signature, Cash Rebate Visa Platinum',
+        description: 'Range of Visa credit cards with different reward structures',
+        suitability: 'Medium',
+        annualFee: 'RM100-500',
+        creditLimit: 'RM10,000-50,000',
+        features: ['Rewards points', 'Cash rebates', 'Travel benefits', 'Purchase protection'],
+        requirements: ['Annual income: RM36,000+', 'Good credit score', 'Age 21-65']
+      },
+      {
+        id: 'ambank_bonuslink_visa',
+        type: 'Credit',
+        name: 'BonusLink Visa Series (Gold, Platinum, Gold CARz, M-Series, True Visa)',
+        description: 'BonusLink rewards credit cards with various benefits and categories',
+        suitability: 'Medium',
+        annualFee: 'RM0-300',
+        creditLimit: 'RM5,000-30,000',
+        features: ['BonusLink points', 'Category rewards', 'Fuel rebates', 'Shopping benefits'],
+        requirements: ['Annual income: RM24,000+', 'Good credit score', 'Age 21-65']
+      },
+      {
+        id: 'ambank_mastercard_series',
+        type: 'Credit',
+        name: 'Mastercard Platinum, Gold CARz, World Mastercard',
+        description: 'Mastercard credit cards with international acceptance and benefits',
+        suitability: 'Medium',
+        annualFee: 'RM100-400',
+        creditLimit: 'RM8,000-40,000',
+        features: ['International acceptance', 'Travel benefits', 'Purchase protection', 'Rewards program'],
+        requirements: ['Annual income: RM30,000+', 'Good credit score', 'Age 21-65']
+      },
+      {
+        id: 'ambank_unionpay_platinum',
+        type: 'Credit',
+        name: 'UnionPay Platinum',
+        description: 'UnionPay credit card with China and Asia-Pacific benefits',
+        suitability: 'Medium',
+        annualFee: 'RM150-300',
+        creditLimit: 'RM8,000-35,000',
+        features: ['UnionPay network', 'Asia-Pacific benefits', 'Travel rewards', 'Shopping discounts'],
+        requirements: ['Annual income: RM30,000+', 'Good credit score', 'Age 21-65']
+      },
+      {
+        id: 'ambank_signature_priority',
+        type: 'Credit',
+        name: 'AmBank SIGNATURE Priority Banking Visa Infinite (Metal Card)',
+        description: 'Exclusive metal credit card for priority banking customers',
         suitability: 'Low',
-        interestRate: '7.5-12%',
-        maxAmount: 'RM100,000',
-        features: ['Quick approval', 'Flexible repayment terms', 'No collateral required', 'Competitive rates', 'Online application'],
-        requirements: ['Stable income', 'Good credit history', 'DSR < 70%', 'Age 21-60', 'Minimum income RM2,000']
+        annualFee: 'RM800-1200',
+        creditLimit: 'RM50,000-200,000',
+        features: ['Metal card design', 'Priority banking', 'Exclusive benefits', 'Concierge service'],
+        requirements: ['Priority banking status', 'Annual income: RM120,000+', 'Excellent credit score']
       },
       {
-        id: 'ambank_credit_card',
+        id: 'ambank_nexg_prepaid',
+        type: 'Prepaid',
+        name: 'NexG PrePaid Card',
+        description: 'Prepaid card for controlled spending and online transactions',
+        suitability: 'High',
+        annualFee: 'RM0-50',
+        features: ['Controlled spending', 'Online transactions', 'No credit check', 'Reloadable'],
+        requirements: ['Valid Malaysian ID', 'Age 18+', 'No credit history required']
+      }
+    ],
+    loans_financing: [
+      {
+        id: 'ambank_personal_financing',
         type: 'Credit',
-        name: 'AmBank Credit Cards',
-        description: 'Range of credit cards with rewards, cashback, and travel benefits',
+        name: 'Personal Financing / Financing‑i',
+        description: 'Personal loan with flexible terms and Islamic financing option',
         suitability: 'Medium',
-        annualFee: 'RM0-500',
-        creditLimit: 'RM5,000-50,000',
-        features: ['Rewards points', 'Cashback on purchases', 'Travel insurance', 'Purchase protection', '0% installment plans'],
-        requirements: ['Annual income: RM24,000+', 'Good credit score', 'Age 21-65', 'Regular employment']
+        interestRate: '7.5-12.0%',
+        maxAmount: 'RM100,000',
+        features: ['Flexible terms', 'Islamic option', 'Quick approval', 'No collateral'],
+        requirements: ['Stable income', 'Good credit history', 'DSR < 70%', 'Age 21-60']
+      },
+      {
+        id: 'ambank_term_financing_asb',
+        type: 'Credit',
+        name: 'Term Financing‑i (ASB/ASB2)',
+        description: 'Islamic financing for ASB and ASB2 investments',
+        suitability: 'Medium',
+        interestRate: '4.5-6.5%',
+        maxAmount: 'RM200,000',
+        features: ['Islamic financing', 'ASB investment', 'Competitive rates', 'Flexible terms'],
+        requirements: ['ASB account', 'Good credit history', 'Stable income', 'Age 21-60']
+      },
+      {
+        id: 'ambank_amoneylines',
+        type: 'Credit',
+        name: 'AmMoneyLine / AmMoneyLine‑i',
+        description: 'Overdraft facility with Islamic banking option',
+        suitability: 'Medium',
+        interestRate: '8.0-15.0%',
+        maxAmount: 'RM50,000',
+        features: ['Overdraft facility', 'Islamic option', 'Flexible usage', 'Interest on usage only'],
+        requirements: ['Current account', 'Good credit history', 'Stable income', 'Age 21-60']
+      },
+      {
+        id: 'ambank_auto_financing',
+        type: 'Credit',
+        name: 'Islamic and conventional auto financing',
+        description: 'Vehicle financing with both conventional and Islamic options',
+        suitability: 'Medium',
+        interestRate: '3.2-4.8%',
+        maxAmount: 'RM500,000',
+        features: ['Conventional & Islamic', 'Competitive rates', 'Flexible tenures', 'Quick approval'],
+        requirements: ['Stable income', 'Good credit history', 'DSR < 70%', 'Vehicle registration']
       },
       {
         id: 'ambank_home_loan',
         type: 'Credit',
-        name: 'AmBank Home Loan',
-        description: 'Competitive home financing with flexible repayment options and competitive rates',
+        name: 'Home Loan Facility',
+        description: 'Conventional home financing with competitive rates',
         suitability: 'Medium',
         interestRate: '3.5-4.5%',
         maxAmount: 'RM2,000,000',
-        features: ['Competitive rates', 'Flexible repayment', 'Multiple property types', 'Online application', 'Professional advice'],
-        requirements: ['Stable income', 'Good credit history', 'DSR < 70%', 'Property valuation', 'Legal documentation']
-      },
-             {
-         id: 'ambank_car_loan',
-         type: 'Credit',
-         name: 'AmBank Car Loan',
-         description: 'Vehicle financing with competitive rates and flexible repayment terms',
-         suitability: 'Medium',
-         interestRate: '3.2-4.8%',
-         maxAmount: 'RM500,000',
-         features: ['Competitive rates', 'Flexible tenures', 'Quick approval', 'Online application', 'Multiple vehicle types'],
-         requirements: ['Stable income', 'Good credit history', 'DSR < 70%', 'Vehicle registration', 'Insurance coverage']
-       },
-       {
-         id: 'ambank_travel_card',
-         type: 'Credit',
-         name: 'AmBank Travel Credit Card',
-         description: 'Specialized credit card for travel expenses with travel rewards and benefits',
-         suitability: 'High',
-         annualFee: 'RM200',
-         creditLimit: 'RM10,000-50,000',
-         features: ['Travel rewards points', 'No foreign transaction fees', 'Travel insurance coverage', 'Airport lounge access', 'Travel booking discounts'],
-         requirements: ['Annual income: RM36,000+', 'Good credit score', 'Age 21-65', 'Frequent traveler']
-       },
-       {
-         id: 'ambank_premium_travel_card',
-         type: 'Credit',
-         name: 'AmBank Premium Travel Card',
-         description: 'Premium travel credit card with exclusive travel benefits and concierge services',
-         suitability: 'High',
-         annualFee: 'RM500',
-         creditLimit: 'RM20,000-100,000',
-         features: ['Premium travel rewards', 'Concierge services', 'Priority boarding', 'Hotel upgrades', 'Comprehensive travel insurance'],
-         requirements: ['Annual income: RM60,000+', 'Excellent credit score', 'Age 25-65', 'High travel frequency']
-       },
-       {
-         id: 'ambank_air_miles_card',
-         type: 'Credit',
-         name: 'AmBank Air Miles Credit Card',
-         description: 'Credit card that earns air miles for flight redemptions and travel rewards',
-         suitability: 'Medium',
-         annualFee: 'RM300',
-         creditLimit: 'RM15,000-75,000',
-         features: ['Air miles earning', 'Flight redemption', 'Airport transfers', 'Baggage insurance', 'Travel accident coverage'],
-         requirements: ['Annual income: RM48,000+', 'Good credit score', 'Age 21-65', 'Regular air travel']
-       }
-     ],
-    islamic: [
-      {
-        id: 'ambank_islamic_savings',
-        type: 'Islamic',
-        name: 'AmBank Islamic Savings Account',
-        description: 'Shariah-compliant savings account with profit sharing and no interest',
-        suitability: 'High',
-        expectedReturn: '2.8%',
-        risk: 'Low',
-        minDeposit: 100,
-        features: ['Shariah-compliant', 'Profit sharing', 'No interest', 'Ethical banking', 'Online banking'],
-        requirements: ['Minimum balance: RM100', 'Valid Malaysian ID', 'Age 18+', 'Shariah compliance preference']
+        features: ['Competitive rates', 'Flexible repayment', 'Multiple property types', 'Professional advice'],
+        requirements: ['Stable income', 'Good credit history', 'DSR < 70%', 'Property valuation']
       },
       {
-        id: 'ambank_islamic_fixed_deposit',
-        type: 'Islamic',
-        name: 'AmBank Islamic Fixed Deposit',
-        description: 'Shariah-compliant fixed deposit with profit sharing and guaranteed returns',
+        id: 'ambank_home_link',
+        type: 'Credit',
+        name: 'Home Link',
+        description: 'Home equity financing using property as collateral',
         suitability: 'Medium',
-        expectedReturn: '4.0%',
-        risk: 'Low',
-        minDeposit: 1000,
-        features: ['Shariah-compliant', 'Profit sharing', 'Flexible tenures', 'Guaranteed returns', 'Ethical investment'],
-        requirements: ['Minimum deposit: RM1,000', 'Shariah compliance preference', 'Valid Malaysian ID']
+        interestRate: '4.0-5.5%',
+        maxAmount: 'RM1,000,000',
+        features: ['Home equity', 'Flexible usage', 'Competitive rates', 'Property collateral'],
+        requirements: ['Property ownership', 'Good credit history', 'Property equity', 'Age 21-60']
       },
       {
-        id: 'ambank_islamic_home_financing',
-        type: 'Islamic',
-        name: 'AmBank Islamic Home Financing',
-        description: 'Shariah-compliant home financing with competitive profit rates',
+        id: 'ambank_pr1ma_spef',
+        type: 'Credit',
+        name: 'PR1MA / SPEF',
+        description: 'Specialized financing for PR1MA and SPEF properties',
         suitability: 'Medium',
         interestRate: '3.8-4.8%',
-        maxAmount: 'RM2,000,000',
-        features: ['Shariah-compliant', 'Competitive rates', 'Flexible repayment', 'Multiple property types', 'Ethical financing'],
-        requirements: ['Stable income', 'Good credit history', 'DSR < 70%', 'Property valuation', 'Shariah compliance']
+        maxAmount: 'RM500,000',
+        features: ['PR1MA financing', 'SPEF properties', 'Special rates', 'Government support'],
+        requirements: ['PR1MA/SPEF eligibility', 'Good credit history', 'Stable income', 'Age 21-60']
+      },
+      {
+        id: 'ambank_property_link',
+        type: 'Credit',
+        name: 'Property Link',
+        description: 'Property investment financing with flexible terms',
+        suitability: 'Medium',
+        interestRate: '4.2-5.2%',
+        maxAmount: 'RM1,500,000',
+        features: ['Property investment', 'Flexible terms', 'Competitive rates', 'Investment focus'],
+        requirements: ['Investment property', 'Good credit history', 'Stable income', 'Age 21-60']
+      },
+      {
+        id: 'ambank_term_financing_i',
+        type: 'Credit',
+        name: 'Term Financing‑i',
+        description: 'Islamic term financing for various purposes',
+        suitability: 'Medium',
+        interestRate: '4.5-6.5%',
+        maxAmount: 'RM200,000',
+        features: ['Islamic financing', 'Flexible terms', 'Shariah-compliant', 'Competitive rates'],
+        requirements: ['Stable income', 'Good credit history', 'Islamic preference', 'Age 21-60']
+      },
+      {
+        id: 'ambank_commercial_property',
+        type: 'Credit',
+        name: 'Commercial Property Financing',
+        description: 'Financing for commercial properties and business premises',
+        suitability: 'Medium',
+        interestRate: '4.8-6.0%',
+        maxAmount: 'RM5,000,000',
+        features: ['Commercial properties', 'Business premises', 'Competitive rates', 'Flexible terms'],
+        requirements: ['Business registration', 'Good credit history', 'Property valuation', 'Age 21-60']
+      },
+      {
+        id: 'ambank_skim_jaminan',
+        type: 'Credit',
+        name: 'Skim Jaminan Kredit Perumahan',
+        description: 'Housing credit guarantee scheme for first-time buyers',
+        suitability: 'High',
+        interestRate: '3.8-4.8%',
+        maxAmount: 'RM300,000',
+        features: ['First-time buyers', 'Government guarantee', 'Special rates', 'Low down payment'],
+        requirements: ['First-time buyer', 'Good credit history', 'Stable income', 'Age 21-60']
+      }
+    ],
+    wealth_management: [
+      {
+        id: 'ambank_unit_trusts',
+        type: 'Investment',
+        name: 'Unit Trusts via AmInvest',
+        description: 'Professional managed unit trust funds with various risk profiles',
+        suitability: 'Medium',
+        expectedReturn: '6-15%',
+        risk: 'Medium-High',
+        minInvestment: 1000,
+        features: ['Professional management', 'Diversified portfolios', 'Regular income options', 'Systematic investment'],
+        requirements: ['Minimum investment: RM1,000', 'Risk assessment', 'Regular contribution recommended']
+      },
+      {
+        id: 'ambank_direct_bond_sukuk',
+        type: 'Investment',
+        name: 'Direct Bond / Sukuk',
+        description: 'Direct investment in bonds and Islamic sukuk instruments',
+        suitability: 'Medium',
+        expectedReturn: '4-8%',
+        risk: 'Medium',
+        minInvestment: 10000,
+        features: ['Direct investment', 'Islamic sukuk', 'Fixed income', 'Regular coupons'],
+        requirements: ['Minimum investment: RM10,000', 'Understanding of bonds', 'Risk tolerance assessment']
+      },
+      {
+        id: 'ambank_dual_currency',
+        type: 'Investment',
+        name: 'Dual Currency Investments',
+        description: 'Investment products linked to currency movements',
+        suitability: 'High',
+        expectedReturn: '5-12%',
+        risk: 'High',
+        minInvestment: 5000,
+        features: ['Currency-linked', 'Higher returns', 'Currency risk', 'Flexible tenures'],
+        requirements: ['Minimum investment: RM5,000', 'Currency understanding', 'High risk tolerance']
+      },
+      {
+        id: 'ambank_equities',
+        type: 'Investment',
+        name: 'Equities',
+        description: 'Direct equity investment in Malaysian and international markets',
+        suitability: 'High',
+        expectedReturn: '8-20%',
+        risk: 'High',
+        minInvestment: 1000,
+        features: ['Direct equity', 'Market exposure', 'High returns', 'Dividend income'],
+        requirements: ['Minimum investment: RM1,000', 'Market understanding', 'High risk tolerance']
+      },
+      {
+        id: 'ambank_smart_partnership',
+        type: 'Investment',
+        name: 'Smart Partnership Programme (SPP)',
+        description: 'Partnership investment program with professional management',
+        suitability: 'Medium',
+        expectedReturn: '7-12%',
+        risk: 'Medium',
+        minInvestment: 5000,
+        features: ['Partnership program', 'Professional management', 'Diversified exposure', 'Regular income'],
+        requirements: ['Minimum investment: RM5,000', 'Partnership agreement', 'Risk assessment']
+      },
+      {
+        id: 'ambank_wealth_advisory',
+        type: 'Service',
+        name: 'Wealth Advisory Services',
+        description: 'Professional wealth management and financial planning services',
+        suitability: 'High',
+        serviceFee: '0.5-2.0%',
+        features: ['Professional advice', 'Financial planning', 'Portfolio management', 'Tax optimization'],
+        requirements: ['Minimum assets: RM100,000', 'Wealth management needs', 'Professional consultation']
+      },
+      {
+        id: 'ambank_private_banking',
+        type: 'Service',
+        name: 'AmPrivate Banking',
+        description: 'Exclusive private banking services for high net worth individuals',
+        suitability: 'Low',
+        serviceFee: '1.0-3.0%',
+        features: ['Exclusive services', 'Dedicated relationship manager', 'Premium products', 'Concierge services'],
+        requirements: ['Minimum assets: RM1,000,000', 'High net worth status', 'Private banking eligibility']
+      },
+      {
+        id: 'ambank_priority_banking',
+        type: 'Service',
+        name: 'Priority Banking tiers',
+        description: 'Tiered priority banking services with exclusive benefits',
+        suitability: 'Medium',
+        serviceFee: '0.3-1.5%',
+        features: ['Priority services', 'Exclusive benefits', 'Dedicated support', 'Premium products'],
+        requirements: ['Minimum assets: RM200,000', 'Priority banking eligibility', 'Relationship management']
+      },
+      {
+        id: 'ambank_will_wasiat',
+        type: 'Service',
+        name: 'Will / Wasiat writing',
+        description: 'Professional will writing and Islamic wasiat services',
+        suitability: 'High',
+        serviceFee: 'RM500-2000',
+        features: ['Will writing', 'Islamic wasiat', 'Legal documentation', 'Estate planning'],
+        requirements: ['Legal consultation', 'Documentation requirements', 'Estate planning needs']
+      },
+      {
+        id: 'ambank_legacy_estate',
+        type: 'Service',
+        name: 'Legacy & estate planning',
+        description: 'Comprehensive estate planning and legacy management services',
+        suitability: 'High',
+        serviceFee: 'RM1000-5000',
+        features: ['Estate planning', 'Legacy management', 'Tax optimization', 'Succession planning'],
+        requirements: ['Estate planning needs', 'Professional consultation', 'Documentation requirements']
+      }
+    ],
+    insurance_takaful: [
+      {
+        id: 'ambank_general_insurance',
+        type: 'Insurance',
+        name: 'General Insurance (vehicle, travel, personal accident, home, business)',
+        description: 'Comprehensive general insurance coverage for various needs',
+        suitability: 'High',
+        monthlyPremium: 'RM50-500',
+        coverage: 'RM50,000-2,000,000',
+        features: ['Vehicle insurance', 'Travel insurance', 'Personal accident', 'Home insurance', 'Business insurance'],
+        requirements: ['Valid Malaysian ID', 'Age 18-70', 'Insurance needs assessment', 'Premium payments']
+      },
+      {
+        id: 'ambank_life_insurance',
+        type: 'Insurance',
+        name: 'Life Insurance (savings, protection, legacy, credit-linked)',
+        description: 'Comprehensive life insurance with various coverage options',
+        suitability: 'High',
+        monthlyPremium: 'RM50-300',
+        coverage: 'RM50,000-1,000,000',
+        features: ['Savings component', 'Protection coverage', 'Legacy planning', 'Credit-linked protection'],
+        requirements: ['Age 18-65', 'Medical underwriting', 'Regular premium payments', 'Good health']
+      },
+      {
+        id: 'ambank_family_takaful',
+        type: 'Insurance',
+        name: 'Family Takaful (Islamic life/family coverage)',
+        description: 'Shariah-compliant family protection and life coverage',
+        suitability: 'High',
+        monthlyPremium: 'RM50-250',
+        coverage: 'RM50,000-500,000',
+        features: ['Shariah-compliant', 'Family protection', 'Islamic principles', 'Profit sharing'],
+        requirements: ['Age 18-65', 'Islamic preference', 'Regular contributions', 'Good health']
+      }
+    ],
+    corporate_treasury: [
+      {
+        id: 'ambank_sme_corporate',
+        type: 'Service',
+        name: 'SME & Corporate Banking',
+        description: 'Comprehensive banking services for SMEs and corporations',
+        suitability: 'Medium',
+        serviceFee: 'Variable',
+        features: ['Business accounts', 'Trade finance', 'Cash management', 'Corporate lending'],
+        requirements: ['Business registration', 'Corporate structure', 'Banking relationship', 'Financial documentation']
+      },
+      {
+        id: 'ambank_cash_management',
+        type: 'Service',
+        name: 'Cash management',
+        description: 'Advanced cash management solutions for businesses',
+        suitability: 'Medium',
+        serviceFee: '0.1-0.5%',
+        features: ['Cash pooling', 'Payment solutions', 'Receivables management', 'Liquidity management'],
+        requirements: ['Business registration', 'Cash management needs', 'Corporate structure', 'Banking relationship']
+      },
+      {
+        id: 'ambank_trade_finance_corp',
+        type: 'Service',
+        name: 'Trade finance',
+        description: 'Comprehensive trade finance solutions for international business',
+        suitability: 'Medium',
+        serviceFee: '0.5-2.0%',
+        features: ['Import/export finance', 'Letters of credit', 'Trade guarantees', 'Documentary collections'],
+        requirements: ['Business registration', 'Trade activities', 'International business', 'Trade documentation']
+      },
+      {
+        id: 'ambank_payroll_solutions',
+        type: 'Service',
+        name: 'Payroll solutions',
+        description: 'Comprehensive payroll and HR management solutions',
+        suitability: 'Medium',
+        serviceFee: 'RM2-10 per employee',
+        features: ['Payroll processing', 'HR management', 'Tax compliance', 'Employee benefits'],
+        requirements: ['Business registration', 'Employee base', 'HR needs', 'Compliance requirements']
+      },
+      {
+        id: 'ambank_business_accounts',
+        type: 'Service',
+        name: 'Business current accounts',
+        description: 'Specialized current accounts for business operations',
+        suitability: 'High',
+        serviceFee: 'RM0-200',
+        features: ['Business transactions', 'Online banking', 'Checkbook facility', 'Business support'],
+        requirements: ['Business registration', 'Valid business documentation', 'Business needs assessment']
+      },
+      {
+        id: 'ambank_structured_products',
+        type: 'Investment',
+        name: 'Structured Products (autocallables, capital-protected notes, equity-linked investments, FX, dual currency investments)',
+        description: 'Sophisticated investment products with various risk-return profiles',
+        suitability: 'High',
+        expectedReturn: '5-20%',
+        risk: 'High',
+        minInvestment: 10000,
+        features: ['Autocallables', 'Capital protection', 'Equity-linked', 'FX products', 'Dual currency'],
+        requirements: ['Minimum investment: RM10,000', 'Sophisticated investor', 'High risk tolerance', 'Product understanding']
       }
     ]
   };

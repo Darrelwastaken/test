@@ -42,12 +42,14 @@ export default function ProposalGenerator() {
   }, [nric]);
 
   const availableProducts = [
-    { id: 1, name: '401(k) Rollover', category: 'Retirement', description: 'Consolidate retirement accounts' },
-    { id: 2, name: 'IRA Contribution', category: 'Retirement', description: 'Tax-advantaged retirement savings' },
-    { id: 3, name: 'Life Insurance', category: 'Insurance', description: 'Family protection coverage' },
-    { id: 4, name: 'Index Funds', category: 'Investment', description: 'Diversified market exposure' },
-    { id: 5, name: 'Bond Portfolio', category: 'Investment', description: 'Fixed income investments' },
-    { id: 6, name: 'Emergency Fund', category: 'Savings', description: 'Liquid cash reserves' }
+    { id: 1, name: 'AmVault Savings Account / Account‑i', category: 'Personal Banking', description: 'High-yield savings account with competitive interest rates and Islamic banking options' },
+    { id: 2, name: 'TRUE Savers Account / Account‑i', category: 'Personal Banking', description: 'Savings account with bonus interest for regular deposits and Islamic banking option' },
+    { id: 3, name: 'AmBank Visa Debit Card', category: 'Cards', description: 'Debit card for cashless transactions and ATM withdrawals' },
+    { id: 4, name: 'AmBank Enrich Visa Infinite & Platinum', category: 'Cards', description: 'Premium credit cards with travel rewards and exclusive benefits' },
+    { id: 5, name: 'Personal Financing / Financing‑i', category: 'Loans & Financing', description: 'Personal loan with flexible terms and Islamic financing option' },
+    { id: 6, name: 'Unit Trusts via AmInvest', category: 'Wealth Management', description: 'Professional managed unit trust funds with various risk profiles' },
+    { id: 7, name: 'General Insurance', category: 'Insurance & Takaful', description: 'Comprehensive general insurance coverage for various needs' },
+    { id: 8, name: 'SME & Corporate Banking', category: 'Corporate & Treasury', description: 'Comprehensive banking services for SMEs and corporations' }
   ];
 
   const handleProductToggle = (productId) => {
