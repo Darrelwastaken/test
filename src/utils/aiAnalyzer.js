@@ -6,176 +6,196 @@ import fetch from 'cross-fetch';
 
 export class DataDrivenBankingAnalyzer {
   constructor() {
-    this.clientSegments = [
-      'High Net Worth',
-      'Growth Investor', 
-      'Conservative Saver',
-      'Credit Builder',
-      'Risk Taker',
-      'Balanced Portfolio'
-    ];
+    this.clientSegments = {
+      'Premium': { minAssets: 1000000, minIncome: 15000 },
+      'Priority': { minAssets: 500000, minIncome: 10000 },
+      'Standard': { minAssets: 100000, minIncome: 5000 },
+      'Basic': { minAssets: 0, minIncome: 0 }
+    };
   }
 
-  // Main analysis function - purely data-driven
   async generateInsights(clientData) {
     try {
-      // Extract all relevant data points
       const dataPoints = this.extractDataPoints(clientData);
-      
-      // Generate insights based purely on data analysis
-      const insights = this.generateDataDrivenInsights(dataPoints, clientData);
+      const insights = this.generateBankingInsights(dataPoints, clientData);
       
       return insights;
     } catch (error) {
-      console.error('Error generating data-driven insights:', error);
+      console.error('Error generating insights:', error);
       return this.getFallbackInsights(clientData);
     }
   }
 
-  // Extract all relevant data points from client data
   extractDataPoints(clientData) {
-    const data = {
-      // Basic client info
-      name: clientData.client?.name || '',
-      nric: clientData.client?.nric || '',
-      riskProfile: clientData.client?.riskProfile || '',
-      status: clientData.client?.status || '',
-      
-      // Financial metrics
-      netWorth: this.parseCurrency(clientData.financial?.netWorth || 'RM 0'),
-      totalAssets: clientData.dashboard?.assets || 0,
-      monthlyCashflow: clientData.dashboard?.monthlyCashflow || [],
-      avgCashflow: 0,
-      cashflowStability: 0,
+    const dashboard = clientData.dashboard || {};
+    const financial = clientData.financial || {};
+    const investments = clientData.investments || {};
+    const transactions = clientData.transactions || [];
+
+    // Calculate key financial metrics
+    const totalAssets = dashboard.assets || financial.totalAssets || 0;
+    const totalLiabilities = this.calculateTotalLiabilities(clientData);
+    const netWorth = totalAssets - totalLiabilities;
+    const monthlyIncome = dashboard.cashflow || financial.monthlyIncome || 0;
+    const annualIncome = monthlyIncome * 12;
       
       // Account balances
-      casaBalance: clientData.dashboard?.accountBalances?.casa || 0,
-      fdBalance: clientData.dashboard?.accountBalances?.fd || 0,
-      loansBalance: clientData.dashboard?.accountBalances?.loans || 0,
-      cardsBalance: clientData.dashboard?.accountBalances?.cards || 0,
+    const accountBalances = dashboard.accountBalances || {};
+    const casaBalance = accountBalances.casa || 0;
+    const fdBalance = accountBalances.fd || 0;
+    const loanBalance = accountBalances.loans || 0;
+    const cardBalance = accountBalances.cards || 0;
       
       // Investment data
-      holdings: clientData.investments?.holdings || [],
-      assetUtilization: clientData.financial?.assetUtilization || 0,
-      
-      // Liability data
-      liabilities: clientData.liabilities?.liabilities || [],
-      creditLines: clientData.liabilities?.creditLines || [],
-      
-      // Transaction data
-      transactions: clientData.transactions || {},
-      
-      // Calculated metrics
-      cashRatio: 0,
-      debtToIncomeRatio: 0,
-      creditUtilization: 0,
-      investmentDiversity: 0,
-      totalLiabilities: 0,
-      annualIncome: 0,
-      emergencyFundRatio: 0,
-      productCount: 0
-    };
-
-    // Calculate derived metrics
-    data.avgCashflow = data.monthlyCashflow.length > 0 ? 
-      data.monthlyCashflow.reduce((a, b) => a + b, 0) / data.monthlyCashflow.length : 0;
+    const investmentValue = investments.totalValue || 0;
+    const investmentDiversity = this.calculateInvestmentDiversity(investments.holdings || []);
     
-    data.cashflowStability = this.calculateCashflowStability(data.monthlyCashflow);
-    data.cashRatio = data.totalAssets > 0 ? data.casaBalance / data.totalAssets : 0;
-    data.totalLiabilities = this.calculateTotalLiabilities(clientData);
-    data.annualIncome = (clientData.dashboard?.cashflow || 0) * 12;
-    data.debtToIncomeRatio = data.annualIncome > 0 ? data.totalLiabilities / data.annualIncome : 0;
-    data.creditUtilization = this.calculateCreditUtilization(clientData);
-    data.investmentDiversity = this.calculateInvestmentDiversity(data.holdings);
-    data.emergencyFundRatio = data.annualIncome > 0 ? data.casaBalance / (data.annualIncome / 12 * 3) : 0;
-    data.productCount = this.countActiveProducts(clientData);
+    // Credit metrics
+    const creditUtilization = this.calculateCreditUtilization(clientData);
+    const debtToIncomeRatio = annualIncome > 0 ? (totalLiabilities / annualIncome) : 0;
+    
+    // Emergency fund analysis
+    const emergencyFundRatio = this.calculateEmergencyFundRatio(casaBalance, monthlyIncome);
+    
+    // Age calculation from NRIC
+    const age = this.calculateAgeFromNRIC(clientData.nric || '');
+    
+    // Cash flow stability
+    const cashflowStability = this.calculateCashflowStability(monthlyIncome);
 
-    return data;
+    return {
+      // Basic metrics
+      totalAssets,
+      totalLiabilities,
+      netWorth,
+      monthlyIncome,
+      annualIncome,
+      age,
+      
+      // Account balances
+      casaBalance,
+      fdBalance,
+      loanBalance,
+      cardBalance,
+      
+      // Investment metrics
+      investmentValue,
+      investmentDiversity,
+      
+      // Credit metrics
+      creditUtilization,
+      debtToIncomeRatio,
+      
+      // Financial health
+      emergencyFundRatio,
+      cashflowStability,
+      
+      // Ratios
+      cashRatio: totalAssets > 0 ? casaBalance / totalAssets : 0,
+      investmentRatio: totalAssets > 0 ? investmentValue / totalAssets : 0,
+      debtRatio: totalAssets > 0 ? totalLiabilities / totalAssets : 0
+    };
   }
 
-  // Generate insights based purely on data analysis
-  generateDataDrivenInsights(dataPoints, clientData) {
+  generateBankingInsights(dataPoints, clientData) {
     const insights = [];
 
-    // 1. Transaction Pattern Analysis (Most Specific)
-    const transactionInsight = this.analyzeTransactionPatterns(dataPoints, clientData);
-    if (transactionInsight) insights.push(transactionInsight);
+    // 1. Emergency Fund Analysis (High Priority)
+    const emergencyFundInsight = this.analyzeEmergencyFund(dataPoints);
+    if (emergencyFundInsight) insights.push(emergencyFundInsight);
 
-    // 2. Product Usage Analysis (Behavioral)
-    const productInsight = this.analyzeProductUsage(dataPoints, clientData);
-    if (productInsight) insights.push(productInsight);
-
-    // 3. Digital Banking Behavior
-    const digitalInsight = this.analyzeDigitalBehavior(dataPoints, clientData);
-    if (digitalInsight) insights.push(digitalInsight);
-
-    // 4. Spending Pattern Analysis
-    const spendingInsight = this.analyzeSpendingPatterns(dataPoints, clientData);
-    if (spendingInsight) insights.push(spendingInsight);
-
-    // 5. Wealth Service Engagement
-    const wealthInsight = this.analyzeWealthEngagement(dataPoints, clientData);
-    if (wealthInsight) insights.push(wealthInsight);
-
-    // 6. Credit Card Usage Patterns
-    const creditCardInsight = this.analyzeCreditCardUsage(dataPoints, clientData);
-    if (creditCardInsight) insights.push(creditCardInsight);
-
-    // 7. Investment Behavior Analysis
-    const investmentInsight = this.analyzeInvestmentBehavior(dataPoints, clientData);
+    // 2. Investment Opportunity Analysis
+    const investmentInsight = this.analyzeInvestmentOpportunity(dataPoints);
     if (investmentInsight) insights.push(investmentInsight);
 
-    // 8. Risk Profile vs Behavior Mismatch
-    const riskMismatchInsight = this.analyzeRiskMismatch(dataPoints, clientData);
-    if (riskMismatchInsight) insights.push(riskMismatchInsight);
+    // 3. Credit Health Analysis
+    const creditInsight = this.analyzeCreditHealth(dataPoints);
+    if (creditInsight) insights.push(creditInsight);
 
-    // Sort insights by priority and data confidence
+    // 4. Insurance Needs Analysis
+    const insuranceInsight = this.analyzeInsuranceNeeds(dataPoints);
+    if (insuranceInsight) insights.push(insuranceInsight);
+
+    // 5. Wealth Management Opportunity
+    const wealthInsight = this.analyzeWealthManagement(dataPoints);
+    if (wealthInsight) insights.push(wealthInsight);
+
+    // 6. Debt Management Analysis
+    const debtInsight = this.analyzeDebtManagement(dataPoints);
+    if (debtInsight) insights.push(debtInsight);
+
+    // 7. Travel & Lifestyle Analysis (New)
+    const travelInsight = this.analyzeTravelPatterns(dataPoints, clientData);
+    if (travelInsight) insights.push(travelInsight);
+
+    // Sort by priority and estimated value
     insights.sort((a, b) => {
-      if (a.priority === 'HIGH' && b.priority !== 'HIGH') return -1;
-      if (b.priority === 'HIGH' && a.priority !== 'HIGH') return 1;
-      return b.confidence - a.confidence;
+      const priorityOrder = { 'HIGH': 3, 'MEDIUM': 2, 'LOW': 1 };
+      if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
+        return priorityOrder[b.priority] - priorityOrder[a.priority];
+      }
+      return b.estimatedValue - a.estimatedValue;
     });
 
-    return insights.slice(0, 4);
+    return insights.slice(0, 3); // Return top 3 insights
   }
 
-  // Cash Flow Analysis
-  analyzeCashFlow(dataPoints) {
-    const { avgCashflow, cashflowStability, cashRatio, totalAssets } = dataPoints;
+  // Emergency Fund Analysis
+  analyzeEmergencyFund(dataPoints) {
+    const { emergencyFundRatio, monthlyIncome, casaBalance } = dataPoints;
     
-    if (cashRatio > 0.4 && avgCashflow > 0) {
+    if (emergencyFundRatio < 50) {
       return {
-        text: `High cash reserves (${(cashRatio * 100).toFixed(1)}%) - investment opportunity`,
+        insight: `Critical: Emergency fund covers only ${Math.round(emergencyFundRatio)}% of 3-month expenses`,
+        reasoning: `You have RM${casaBalance.toLocaleString()} in savings but need RM${(monthlyIncome * 3).toLocaleString()} for emergency fund. This is a high priority for financial security.`,
         priority: 'HIGH',
-        type: 'cash_flow_analysis',
-        confidence: 0.9,
-        products: [],
-        estimatedValue: totalAssets * cashRatio * 0.7,
-        dataPoints: { cashRatio: cashRatio, avgCashflow: avgCashflow }
+        type: 'emergency_fund_analysis',
+        confidence: 0.95,
+        estimatedValue: Math.max(10000, monthlyIncome * 3 - casaBalance),
+        dataPoints: { emergencyFundRatio, monthlyIncome, casaBalance }
       };
     }
     
-    if (cashflowStability < 0.6) {
+    if (emergencyFundRatio < 100) {
       return {
-        text: `Unstable cash flow (${(cashflowStability * 100).toFixed(1)}% stability) - needs attention`,
+        insight: `Emergency fund needs attention - ${Math.round(emergencyFundRatio)}% coverage`,
+        reasoning: `Your emergency fund should cover 3 months of expenses (RM${(monthlyIncome * 3).toLocaleString()}). Currently you have RM${casaBalance.toLocaleString()}.`,
         priority: 'MEDIUM',
-        type: 'cash_flow_analysis',
-        confidence: 0.8,
-        products: [],
-        estimatedValue: 50000,
-        dataPoints: { cashflowStability: cashflowStability }
+        type: 'emergency_fund_analysis',
+        confidence: 0.85,
+        estimatedValue: monthlyIncome * 3 - casaBalance,
+        dataPoints: { emergencyFundRatio, monthlyIncome, casaBalance }
+      };
+    }
+
+    return null;
+  }
+
+  // Investment Opportunity Analysis
+  analyzeInvestmentOpportunity(dataPoints) {
+    const { casaBalance, investmentRatio, totalAssets, monthlyIncome, age } = dataPoints;
+    
+    if (casaBalance > 50000 && investmentRatio < 0.3) {
+      return {
+        insight: `High cash reserves (RM${casaBalance.toLocaleString()}) with low investment allocation`,
+        reasoning: `You have RM${casaBalance.toLocaleString()} in savings but only ${(investmentRatio * 100).toFixed(1)}% in investments. At age ${age}, consider diversifying for better returns.`,
+        priority: 'HIGH',
+        type: 'investment_opportunity',
+        confidence: 0.9,
+        estimatedValue: Math.min(casaBalance * 0.6, 100000),
+        dataPoints: { casaBalance, investmentRatio, age }
       };
     }
     
-    if (avgCashflow > 10000) {
+    if (monthlyIncome > 8000 && investmentRatio < 0.2) {
       return {
-        text: `Strong cash flow RM${this.formatCurrency(avgCashflow)}/month - wealth building opportunity`,
-        priority: 'HIGH',
-        type: 'cash_flow_analysis',
-        confidence: 0.9,
-        products: [],
-        estimatedValue: avgCashflow * 12,
-        dataPoints: { avgCashflow: avgCashflow, cashflowStability: cashflowStability }
+        insight: `Strong income with limited investment exposure`,
+        reasoning: `Monthly income of RM${monthlyIncome.toLocaleString()} but only ${(investmentRatio * 100).toFixed(1)}% in investments. Consider systematic investment plans for wealth building.`,
+        priority: 'MEDIUM',
+        type: 'investment_opportunity',
+        confidence: 0.8,
+        estimatedValue: monthlyIncome * 12,
+        dataPoints: { monthlyIncome, investmentRatio }
       };
     }
 
@@ -184,820 +204,328 @@ export class DataDrivenBankingAnalyzer {
 
   // Credit Health Analysis
   analyzeCreditHealth(dataPoints) {
-    const { debtToIncomeRatio, creditUtilization, totalLiabilities, annualIncome } = dataPoints;
+    const { creditUtilization, debtToIncomeRatio, cardBalance, monthlyIncome } = dataPoints;
     
-    if (debtToIncomeRatio < 0.3 && creditUtilization < 0.3) {
+    if (creditUtilization > 0.8) {
       return {
-        insight: `Premium credit profile - ${(creditUtilization * 100).toFixed(1)}% utilization`,
-        reasoning: `Excellent credit score with low debt ratio (${(debtToIncomeRatio * 100).toFixed(1)}%)`,
+        insight: `High credit utilization (${(creditUtilization * 100).toFixed(1)}%) - debt consolidation opportunity`,
+        reasoning: `Credit utilization of ${(creditUtilization * 100).toFixed(1)}% is very high. Consider debt consolidation to reduce interest costs and improve credit score.`,
         priority: 'HIGH',
         type: 'credit_analysis',
         confidence: 0.9,
-        products: [],
-        estimatedValue: 100000,
-        dataPoints: { debtToIncomeRatio: debtToIncomeRatio, creditUtilization: creditUtilization }
-      };
-    }
-    
-    if (creditUtilization > 0.7) {
-      return {
-        insight: `High credit utilization - ${(creditUtilization * 100).toFixed(1)}%`,
-        reasoning: `Credit utilization exceeds 70% threshold`,
-        priority: 'HIGH',
-        type: 'credit_analysis',
-        confidence: 0.8,
-        products: [],
-        estimatedValue: 50000,
-        dataPoints: { creditUtilization: creditUtilization, totalLiabilities: totalLiabilities }
-      };
-    }
-    
-    if (debtToIncomeRatio > 0.4) {
-      return {
-        insight: `${(debtToIncomeRatio * 100).toFixed(1)}% debt burden - credit counseling`,
-        reasoning: `Debt-to-income ratio of ${(debtToIncomeRatio * 100).toFixed(1)}% exceeds 40% recommended limit`,
-        priority: 'MEDIUM',
-        type: 'credit_analysis',
-        confidence: 0.7,
-        products: [],
-        estimatedValue: 75000,
-        dataPoints: { debtToIncomeRatio: debtToIncomeRatio, totalLiabilities: totalLiabilities }
-      };
-    }
-
-    return null;
-  }
-
-  // Investment Analysis
-  analyzeInvestments(dataPoints) {
-    const { holdings, assetUtilization, investmentDiversity, totalAssets } = dataPoints;
-    
-    if (holdings.length === 0 && assetUtilization < 50) {
-      return {
-        insight: `No investment products`,
-        reasoning: `${(assetUtilization * 100).toFixed(1)}% asset utilization with no investments`,
-        priority: 'MEDIUM',
-        type: 'investment_analysis',
-        confidence: 0.9,
-        products: [],
-        estimatedValue: totalAssets * 0.1,
-        dataPoints: { holdingsCount: holdings.length, assetUtilization: assetUtilization }
-      };
-    }
-    
-    if (investmentDiversity < 0.3 && holdings.length > 0) {
-      return {
-        insight: `${(investmentDiversity * 100).toFixed(1)}% diversification - rebalance needed`,
-        reasoning: `Portfolio diversity of ${(investmentDiversity * 100).toFixed(1)}% is below 30% recommended threshold`,
-        priority: 'MEDIUM',
-        type: 'investment_analysis',
-        confidence: 0.8,
-        products: [],
-        estimatedValue: 30000,
-        dataPoints: { investmentDiversity: investmentDiversity, holdingsCount: holdings.length }
-      };
-    }
-    
-    if (assetUtilization > 80) {
-      return {
-        insight: `${assetUtilization.toFixed(1)}% utilization - risk management`,
-        reasoning: `Asset utilization of ${assetUtilization.toFixed(1)}% exceeds 80% risk threshold`,
-        priority: 'MEDIUM',
-        type: 'investment_analysis',
-        confidence: 0.8,
-        products: [],
-        estimatedValue: 30000,
-        dataPoints: { assetUtilization: assetUtilization }
-      };
-    }
-
-    return null;
-  }
-
-  // Wealth Analysis
-  analyzeWealth(dataPoints) {
-    const { netWorth, avgCashflow, totalAssets, assetUtilization } = dataPoints;
-    
-    if (netWorth > 500000) {
-      return {
-        insight: `High net worth - RM${this.formatCurrency(netWorth)}`,
-        reasoning: `Premium client segment based on net worth`,
-        priority: 'HIGH',
-        type: 'wealth_analysis',
-        confidence: 0.9,
-        products: [],
-        estimatedValue: netWorth * 0.05,
-        dataPoints: { netWorth: netWorth, totalAssets: totalAssets }
-      };
-    }
-    
-    if (avgCashflow > 8000 && netWorth > 100000) {
-      return {
-        insight: `High cash flow - RM${this.formatCurrency(avgCashflow)}/month`,
-        reasoning: `Strong income pattern with RM${this.formatCurrency(netWorth)} net worth`,
-        priority: 'MEDIUM',
-        type: 'wealth_analysis',
-        confidence: 0.8,
-        products: [],
-        estimatedValue: avgCashflow * 12,
-        dataPoints: { avgCashflow: avgCashflow, netWorth: netWorth }
-      };
-    }
-    
-    if (netWorth < 50000 && avgCashflow > 0) {
-      return {
-        insight: `Mass market client - RM${this.formatCurrency(netWorth)} net worth`,
-        reasoning: `Building wealth with RM${this.formatCurrency(avgCashflow)}/month cash flow`,
-        priority: 'MEDIUM',
-        type: 'wealth_analysis',
-        confidence: 0.7,
-        products: [],
-        estimatedValue: 25000,
-        dataPoints: { netWorth: netWorth, avgCashflow: avgCashflow }
-      };
-    }
-
-    return null;
-  }
-
-  // Risk Analysis
-  analyzeRisk(dataPoints) {
-    const { cashflowStability, emergencyFundRatio, assetUtilization, debtToIncomeRatio } = dataPoints;
-    
-    if (cashflowStability < 0.5 && emergencyFundRatio < 0.5) {
-      return {
-        text: `${(cashflowStability * 100).toFixed(1)}% stability - emergency fund needed`,
-        priority: 'HIGH',
-        type: 'risk_analysis',
-        confidence: 0.9,
-        products: [],
-        estimatedValue: 40000,
-        dataPoints: { cashflowStability: cashflowStability, emergencyFundRatio: emergencyFundRatio }
-      };
-    }
-    
-    if (assetUtilization > 90) {
-      return {
-        text: `${assetUtilization.toFixed(1)}% utilization - liquidity risk`,
-        priority: 'MEDIUM',
-        type: 'risk_analysis',
-        confidence: 0.8,
-        products: [],
-        estimatedValue: 40000,
-        dataPoints: { assetUtilization: assetUtilization }
+        estimatedValue: cardBalance,
+        dataPoints: { creditUtilization, cardBalance }
       };
     }
     
     if (debtToIncomeRatio > 0.5) {
       return {
-        text: `${(debtToIncomeRatio * 100).toFixed(1)}% debt - reduction priority`,
+        insight: `High debt-to-income ratio (${(debtToIncomeRatio * 100).toFixed(1)}%) - debt management needed`,
+        reasoning: `Debt-to-income ratio of ${(debtToIncomeRatio * 100).toFixed(1)}% exceeds recommended 50% limit. Consider debt restructuring or consolidation.`,
         priority: 'HIGH',
-        type: 'risk_analysis',
-        confidence: 0.8,
-        products: [],
-        estimatedValue: 60000,
-        dataPoints: { debtToIncomeRatio: debtToIncomeRatio }
-      };
-    }
-
-    return null;
-  }
-
-  // Product Usage Analysis - More Specific
-  analyzeProductUsage(dataPoints, clientData) {
-    const { productCount, totalAssets, avgCashflow } = dataPoints;
-    const accountBalances = clientData.dashboard?.accountBalances || {};
-    
-    // Check for specific product usage patterns
-    const hasCASA = accountBalances.casa > 0;
-    const hasFD = accountBalances.fd > 0;
-    const hasLoans = accountBalances.loans > 0;
-    const hasCards = accountBalances.cards > 0;
-    const hasInvestments = (clientData.investments?.holdings || []).length > 0;
-    
-    if (hasCASA && !hasFD && avgCashflow > 3000) {
-      return {
-        text: `Customer has RM${this.formatCurrency(accountBalances.casa)} in CASA but no fixed deposits - investment opportunity`,
-        priority: 'HIGH',
-        type: 'investment_opportunity',
-        confidence: 0.9,
-        products: ['Fixed Deposits', 'Unit Trusts', 'Investment Advisory'],
-        estimatedValue: accountBalances.casa * 0.7, // 70% of CASA balance
-        dataPoints: { casaBalance: accountBalances.casa, avgCashflow: avgCashflow }
+        type: 'credit_analysis',
+        confidence: 0.85,
+        estimatedValue: monthlyIncome * 6,
+        dataPoints: { debtToIncomeRatio, monthlyIncome }
       };
     }
     
-    if (hasCASA && hasCards && !hasInvestments && totalAssets > 50000) {
+    if (creditUtilization < 0.3 && monthlyIncome > 5000) {
       return {
-        text: `Customer has savings and credit but no investments - wealth building opportunity`,
+        insight: `Excellent credit profile - premium card opportunity`,
+        reasoning: `Low credit utilization (${(creditUtilization * 100).toFixed(1)}%) with good income (RM${monthlyIncome.toLocaleString()}/month). Qualify for premium credit cards with better rewards.`,
         priority: 'MEDIUM',
-        type: 'wealth_building',
+        type: 'credit_analysis',
         confidence: 0.8,
-        products: ['Investment Products', 'Wealth Management', 'Financial Planning'],
-        estimatedValue: totalAssets * 0.3, // 30% of total assets
-        dataPoints: { totalAssets: totalAssets, productCount: productCount }
+        estimatedValue: 5000,
+        dataPoints: { creditUtilization, monthlyIncome }
+      };
+    }
+
+    return null;
+  }
+
+  // Insurance Needs Analysis
+  analyzeInsuranceNeeds(dataPoints) {
+    const { monthlyIncome, age, totalAssets, investmentValue } = dataPoints;
+    const annualIncome = monthlyIncome * 12;
+    
+    // Basic insurance need: 10x annual income
+    const recommendedCoverage = annualIncome * 10;
+    const currentCoverage = totalAssets + investmentValue; // Simplified assumption
+    
+    if (currentCoverage < recommendedCoverage * 0.5) {
+      return {
+        insight: `Insufficient insurance coverage - ${Math.round((currentCoverage / recommendedCoverage) * 100)}% of recommended`,
+        reasoning: `At age ${age}, recommended life insurance coverage is RM${recommendedCoverage.toLocaleString()} (10x annual income). Current coverage is RM${currentCoverage.toLocaleString()}.`,
+        priority: 'HIGH',
+        type: 'insurance_needs',
+        confidence: 0.9,
+        estimatedValue: recommendedCoverage - currentCoverage,
+        dataPoints: { age, annualIncome, currentCoverage, recommendedCoverage }
       };
     }
     
-    if (hasLoans && !hasCards && avgCashflow > 5000) {
+    if (age > 40 && currentCoverage < recommendedCoverage * 0.8) {
       return {
-        text: `Customer has loans but no credit cards - credit product opportunity`,
+        insight: `Insurance coverage review needed for age ${age}`,
+        reasoning: `At age ${age}, insurance becomes more critical. Current coverage RM${currentCoverage.toLocaleString()} vs recommended RM${recommendedCoverage.toLocaleString()}.`,
         priority: 'MEDIUM',
-        type: 'credit_opportunity',
+        type: 'insurance_needs',
         confidence: 0.8,
-        products: ['Credit Cards', 'Rewards Program', 'Cashback Cards'],
-        estimatedValue: 20000,
-        dataPoints: { avgCashflow: avgCashflow, hasLoans: hasLoans }
-      };
-    }
-    
-    if (productCount === 1 && hasCASA && accountBalances.casa > 10000) {
-      return {
-        text: `Customer only uses savings account with RM${this.formatCurrency(accountBalances.casa)} - product diversification needed`,
-        priority: 'HIGH',
-        type: 'product_diversification',
-        confidence: 0.9,
-        products: ['Credit Cards', 'Investment Products', 'Insurance'],
-        estimatedValue: accountBalances.casa * 0.5, // 50% of CASA balance
-        dataPoints: { casaBalance: accountBalances.casa, productCount: productCount }
+        estimatedValue: recommendedCoverage - currentCoverage,
+        dataPoints: { age, currentCoverage, recommendedCoverage }
       };
     }
 
     return null;
   }
 
-  // Emergency Fund Analysis
-  analyzeEmergencyFund(dataPoints) {
-    const { emergencyFundRatio, casaBalance, avgCashflow } = dataPoints;
+  // Wealth Management Opportunity
+  analyzeWealthManagement(dataPoints) {
+    const { totalAssets, netWorth, monthlyIncome, age } = dataPoints;
     
-    if (emergencyFundRatio < 0.3) {
+    if (totalAssets > 500000 && age > 35) {
       return {
-        text: `Insufficient emergency fund (${(emergencyFundRatio * 100).toFixed(1)}% of 3-month expenses) - savings priority`,
-        priority: 'HIGH',
-        type: 'emergency_fund_analysis',
-        confidence: 0.9,
-        products: [],
-        estimatedValue: avgCashflow * 3,
-        dataPoints: { emergencyFundRatio: emergencyFundRatio, casaBalance: casaBalance }
+        insight: `High net worth (RM${netWorth.toLocaleString()}) - wealth management services`,
+        reasoning: `With RM${netWorth.toLocaleString()} net worth at age ${age}, consider professional wealth management for tax optimization and estate planning.`,
+        priority: 'MEDIUM',
+        type: 'wealth_management',
+        confidence: 0.85,
+        estimatedValue: totalAssets * 0.1,
+        dataPoints: { netWorth, age, totalAssets }
       };
     }
     
-    if (emergencyFundRatio > 1.0 && avgCashflow > 5000) {
+    if (monthlyIncome > 15000 && totalAssets > 200000) {
       return {
-        text: `Strong emergency fund (${(emergencyFundRatio * 100).toFixed(1)}% coverage) - investment opportunities`,
-        priority: 'LOW',
-        type: 'emergency_fund_analysis',
-        confidence: 0.7,
-        products: [],
-        estimatedValue: 25000,
-        dataPoints: { emergencyFundRatio: emergencyFundRatio }
-      };
-    }
-
-    return null;
-  }
-
-  // Transaction Pattern Analysis - More Specific
-  analyzeTransactionPatterns(dataPoints, clientData) {
-    const { avgCashflow, cashflowStability } = dataPoints;
-    const transactions = clientData.transactions || {};
-    
-    // Analyze transaction frequency
-    const totalTransactions = this.countTransactions(transactions);
-    const weeklyTransactions = Math.ceil(totalTransactions / 4); // Monthly to weekly estimate
-    
-    if (weeklyTransactions >= 7) {
-      return {
-        insight: `${weeklyTransactions} transactions per week`,
-        reasoning: `Total of ${totalTransactions} transactions in analysis period`,
-        priority: 'HIGH',
-        type: 'transaction_frequency',
-        confidence: 0.9,
-        products: ['Digital Banking', 'Mobile App', 'Rewards Program'],
-        estimatedValue: avgCashflow * 12,
-        dataPoints: { weeklyTransactions: weeklyTransactions, totalTransactions: totalTransactions }
-      };
-    }
-    
-    // Analyze transaction amounts
-    const avgTransactionAmount = this.calculateAverageTransactionAmount(transactions);
-    if (avgTransactionAmount > 5000) {
-      return {
-        insight: `RM${this.formatCurrency(avgTransactionAmount)} average transaction amount`,
-        reasoning: `High-value transaction pattern detected`,
-        priority: 'HIGH',
-        type: 'transaction_value',
+        insight: `High-income professional - premium banking services`,
+        reasoning: `Monthly income RM${monthlyIncome.toLocaleString()} with RM${totalAssets.toLocaleString()} assets. Qualify for premium banking services and exclusive products.`,
+        priority: 'MEDIUM',
+        type: 'wealth_management',
         confidence: 0.8,
-        products: ['Priority Banking', 'Wealth Management', 'Premium Credit Card'],
-        estimatedValue: avgTransactionAmount * 12,
-        dataPoints: { avgTransactionAmount: avgTransactionAmount }
-      };
-    }
-    
-    return null;
-  }
-
-  // Digital Banking Behavior Analysis
-  analyzeDigitalBehavior(dataPoints, clientData) {
-    // Simulate digital banking data (in real implementation, this would come from actual login/usage data)
-    const digitalData = {
-      monthlyLogins: Math.floor(Math.random() * 20) + 5, // 5-25 logins per month
-      mobileAppUsage: Math.random() > 0.3, // 70% use mobile app
-      wealthServicesAccessed: Math.random() > 0.7, // 30% have accessed wealth services
-      lastWealthInteraction: Math.floor(Math.random() * 12) + 1 // 1-12 months ago
-    };
-    
-    if (digitalData.monthlyLogins >= 10 && !digitalData.wealthServicesAccessed) {
-      return {
-        text: `Customer logs in ${digitalData.monthlyLogins}+ times/month but has never used wealth services - engagement opportunity`,
-        priority: 'HIGH',
-        type: 'digital_engagement',
-        confidence: 0.9,
-        products: ['Wealth Management', 'Investment Advisory', 'Financial Planning'],
         estimatedValue: 50000,
-        dataPoints: { monthlyLogins: digitalData.monthlyLogins, wealthServicesUsed: false }
+        dataPoints: { monthlyIncome, totalAssets }
       };
     }
-    
-    if (digitalData.monthlyLogins < 5) {
-      return {
-        text: `Low digital engagement (${digitalData.monthlyLogins} logins/month) - digital adoption opportunity`,
-        priority: 'MEDIUM',
-        type: 'digital_adoption',
-        confidence: 0.8,
-        products: ['Mobile Banking', 'Digital Onboarding', 'Online Banking'],
-        estimatedValue: 20000,
-        dataPoints: { monthlyLogins: digitalData.monthlyLogins }
-      };
-    }
-    
+
     return null;
   }
 
-  // Spending Pattern Analysis
-  analyzeSpendingPatterns(dataPoints, clientData) {
-    // Extract real transaction data
+  // Debt Management Analysis
+  analyzeDebtManagement(dataPoints) {
+    const { totalLiabilities, monthlyIncome, debtToIncomeRatio, loanBalance } = dataPoints;
+    
+    if (loanBalance > 0 && debtToIncomeRatio > 0.4) {
+      return {
+        insight: `High debt burden - refinancing opportunity`,
+        reasoning: `Debt-to-income ratio ${(debtToIncomeRatio * 100).toFixed(1)}% with RM${loanBalance.toLocaleString()} in loans. Consider refinancing to lower rates and reduce monthly payments.`,
+        priority: 'MEDIUM',
+        type: 'debt_management',
+        confidence: 0.8,
+        estimatedValue: loanBalance,
+        dataPoints: { debtToIncomeRatio, loanBalance }
+      };
+    }
+    
+    if (totalLiabilities > monthlyIncome * 12) {
+      return {
+        insight: `Liabilities exceed annual income - debt consolidation needed`,
+        reasoning: `Total liabilities RM${totalLiabilities.toLocaleString()} vs annual income RM${(monthlyIncome * 12).toLocaleString()}. Consider debt consolidation to simplify payments.`,
+        priority: 'HIGH',
+        type: 'debt_management',
+        confidence: 0.9,
+        estimatedValue: totalLiabilities,
+        dataPoints: { totalLiabilities, monthlyIncome }
+      };
+    }
+
+    return null;
+  }
+
+  // Travel & Lifestyle Analysis
+  analyzeTravelPatterns(dataPoints, clientData) {
     const transactions = clientData.transactions || [];
     
-    if (transactions.length === 0) {
-      return null; // No transaction data available
+    // Analyze travel-related spending patterns
+    const travelSpending = this.analyzeTravelSpending(transactions);
+    
+    if (travelSpending.totalAmount > 0) {
+      const travelCategories = Object.keys(travelSpending.categories).filter(cat => travelSpending.categories[cat] > 0);
+      
+      return {
+        insight: `RM${travelSpending.totalAmount.toLocaleString()} spent on travel-related expenses`,
+        reasoning: `Travel spending detected across ${travelCategories.length} categories: ${travelCategories.join(', ')}. Consider travel-specific banking products for better rates and convenience.`,
+        priority: 'MEDIUM',
+        type: 'travel_analysis',
+        confidence: 0.85,
+        estimatedValue: travelSpending.totalAmount * 0.1, // 10% of travel spending as opportunity
+        dataPoints: { 
+          travelSpending: travelSpending.totalAmount,
+          travelCategories: travelCategories,
+          currencyExchange: travelSpending.categories.currency_exchange || 0,
+          travelAgencies: travelSpending.categories.travel_agencies || 0,
+          airlines: travelSpending.categories.airlines || 0,
+          hotels: travelSpending.categories.hotels || 0
+        },
+        productCategories: this.getProductCategoriesForTravel(travelSpending)
+      };
     }
+    
+    return null;
+  }
 
-    // Analyze grocery spending patterns
-    const groceryTransactions = transactions.filter(t => 
-      t.category && t.category.toLowerCase().includes('grocery') ||
-      t.description && (
-        t.description.toLowerCase().includes('grocery') ||
-        t.description.toLowerCase().includes('supermarket') ||
-        t.description.toLowerCase().includes('market')
-      )
-    );
+  // Analyze travel spending from transactions
+  analyzeTravelSpending(transactions) {
+    const travelCategories = {
+      currency_exchange: 0,
+      travel_agencies: 0,
+      airlines: 0,
+      hotels: 0,
+      car_rental: 0,
+      travel_insurance: 0,
+      dining_abroad: 0,
+      shopping_abroad: 0
+    };
 
-    // Analyze dining/restaurant spending
-    const diningTransactions = transactions.filter(t => 
-      t.category && t.category.toLowerCase().includes('dining') ||
-      t.description && (
-        t.description.toLowerCase().includes('restaurant') ||
-        t.description.toLowerCase().includes('cafe') ||
-        t.description.toLowerCase().includes('food') ||
-        t.description.toLowerCase().includes('dining')
-      )
-    );
+    let totalAmount = 0;
 
-    // Analyze fuel/transportation spending
-    const fuelTransactions = transactions.filter(t => 
-      t.category && t.category.toLowerCase().includes('fuel') ||
-      t.description && (
-        t.description.toLowerCase().includes('petronas') ||
-        t.description.toLowerCase().includes('shell') ||
-        t.description.toLowerCase().includes('caltex') ||
-        t.description.toLowerCase().includes('fuel')
-      )
-    );
+    transactions.forEach(transaction => {
+      const amount = Math.abs(transaction.amount || 0);
+      const description = (transaction.description || '').toLowerCase();
+      const category = (transaction.category || '').toLowerCase();
 
-    // Analyze online shopping
-    const onlineTransactions = transactions.filter(t => 
-      t.channel && t.channel.toLowerCase().includes('online') ||
-      t.description && (
-        t.description.toLowerCase().includes('shopee') ||
-        t.description.toLowerCase().includes('lazada') ||
-        t.description.toLowerCase().includes('amazon') ||
-        t.description.toLowerCase().includes('online')
-      )
-    );
-
-    // Calculate spending metrics
-    const grocerySpending = groceryTransactions.reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0);
-    const diningSpending = diningTransactions.reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0);
-    const fuelSpending = fuelTransactions.reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0);
-    const onlineSpending = onlineTransactions.reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0);
-
-    // Calculate dining frequency (transactions per week, assuming 30-day period)
-    const diningFrequency = diningTransactions.length * (7 / 30); // Convert to weekly frequency
-
-    // Analyze grocery store preferences
-    const groceryStores = {};
-    groceryTransactions.forEach(t => {
-      const storeName = this.extractStoreName(t.description);
-      if (storeName) {
-        groceryStores[storeName] = (groceryStores[storeName] || 0) + Math.abs(Number(t.amount));
+      // Currency exchange detection
+      if (description.includes('currency') || description.includes('forex') || 
+          description.includes('exchange') || category.includes('currency')) {
+        travelCategories.currency_exchange += amount;
+        totalAmount += amount;
+      }
+      // Travel agencies
+      else if (description.includes('travel') || description.includes('agency') || 
+               description.includes('booking') || category.includes('travel')) {
+        travelCategories.travel_agencies += amount;
+        totalAmount += amount;
+      }
+      // Airlines
+      else if (description.includes('airline') || description.includes('flight') || 
+               description.includes('mas') || description.includes('airasia') || 
+               description.includes('malaysia airlines') || category.includes('airline')) {
+        travelCategories.airlines += amount;
+        totalAmount += amount;
+      }
+      // Hotels
+      else if (description.includes('hotel') || description.includes('resort') || 
+               description.includes('accommodation') || category.includes('hotel')) {
+        travelCategories.hotels += amount;
+        totalAmount += amount;
+      }
+      // Car rental
+      else if (description.includes('car rental') || description.includes('rental car') || 
+               category.includes('car_rental')) {
+        travelCategories.car_rental += amount;
+        totalAmount += amount;
+      }
+      // Travel insurance
+      else if (description.includes('travel insurance') || description.includes('takaful') || 
+               category.includes('insurance')) {
+        travelCategories.travel_insurance += amount;
+        totalAmount += amount;
+      }
+      // International dining (high amounts in foreign currencies)
+      else if (amount > 500 && (description.includes('restaurant') || description.includes('cafe')) && 
+               (transaction.currency !== 'MYR' || description.includes('foreign'))) {
+        travelCategories.dining_abroad += amount;
+        totalAmount += amount;
+      }
+      // International shopping (high amounts in foreign currencies)
+      else if (amount > 1000 && (transaction.currency !== 'MYR' || description.includes('foreign'))) {
+        travelCategories.shopping_abroad += amount;
+        totalAmount += amount;
       }
     });
 
-    const preferredGrocery = Object.keys(groceryStores).length > 0 
-      ? Object.entries(groceryStores).sort((a, b) => b[1] - a[1])[0][0]
-      : null;
-
-    // Analyze fuel station preferences
-    const fuelStations = {};
-    fuelTransactions.forEach(t => {
-      const stationName = this.extractStationName(t.description);
-      if (stationName) {
-        fuelStations[stationName] = (fuelStations[stationName] || 0) + Math.abs(Number(t.amount));
-      }
-    });
-
-    const preferredFuel = Object.keys(fuelStations).length > 0 
-      ? Object.entries(fuelStations).sort((a, b) => b[1] - a[1])[0][0]
-      : null;
-
-    // Generate insights based on real data
-    const insights = [];
-
-    // Dining pattern insight - only for significant spending
-    if (diningSpending > 2000) { // Only show if spending > RM2,000
-      insights.push({
-        insight: `RM${this.formatCurrency(diningSpending)} on dining (high lifestyle)`,
-        reasoning: `${Math.round(diningFrequency)} dining transactions per week`,
-        priority: 'HIGH',
-        type: 'dining_pattern',
-        confidence: 0.9,
-        products: ['Dining Credit Card', 'Restaurant Rewards', 'Cashback Program'],
-        estimatedValue: Math.round(diningFrequency * 50 * 52), // Weekly dining spend
-        dataPoints: { diningFrequency: Math.round(diningFrequency), diningSpending }
-      });
-    }
-
-    // Grocery preference insight - only for premium stores or high spending
-    if (preferredGrocery && grocerySpending > 0) {
-      const isPremiumGrocery = ['jaya grocer', 'cold storage', 'village grocer'].includes(preferredGrocery.toLowerCase());
-      if (isPremiumGrocery || grocerySpending > 1500) { // Only show for premium stores or high spending
-        insights.push({
-          insight: `RM${this.formatCurrency(grocerySpending)} at ${preferredGrocery}${isPremiumGrocery ? ' (premium)' : ''}`,
-          reasoning: `Primary grocery store with ${groceryTransactions.length} transactions`,
-          priority: isPremiumGrocery ? 'MEDIUM' : 'LOW',
-          type: 'grocery_preference',
-          confidence: 0.8,
-          products: ['Grocery Credit Card', 'Cashback Program', 'Loyalty Program'],
-          estimatedValue: Math.round(grocerySpending * 0.1), // 10% of grocery spending
-          dataPoints: { preferredGrocery, grocerySpending }
-        });
-      }
-    }
-
-    // Fuel preference insight
-    if (preferredFuel && fuelSpending > 0) {
-      insights.push({
-        text: `Customer primarily uses ${preferredFuel} - fuel rewards opportunity`,
-        priority: 'MEDIUM',
-        type: 'fuel_preference',
-        confidence: 0.8,
-        products: ['Fuel Credit Card', 'Cashback Program', 'Loyalty Program'],
-        estimatedValue: Math.round(fuelSpending * 0.05), // 5% of fuel spending
-        dataPoints: { preferredFuel, fuelSpending }
-      });
-    }
-
-    // Online shopping insight
-    if (onlineSpending > 0 && onlineTransactions.length > 0) {
-      insights.push({
-        text: `Customer shops online frequently (${onlineTransactions.length} transactions) - e-commerce rewards opportunity`,
-        priority: 'MEDIUM',
-        type: 'online_shopping',
-        confidence: 0.8,
-        products: ['Online Shopping Credit Card', 'Cashback Program', 'Digital Rewards'],
-        estimatedValue: Math.round(onlineSpending * 0.08), // 8% of online spending
-        dataPoints: { onlineSpending, onlineTransactionCount: onlineTransactions.length }
-      });
-    }
-
-    // Return the first insight if any found
-    return insights.length > 0 ? insights[0] : null;
+      return {
+      totalAmount,
+      categories: travelCategories
+    };
   }
 
-  // Helper method to extract store name from transaction description
-  extractStoreName(description) {
-    if (!description) return null;
+  // Get product categories for travel insights
+  getProductCategoriesForTravel(travelSpending) {
+    const categories = [];
     
-    const storePatterns = [
-      /jaya\s*grocer/i,
-      /cold\s*storage/i,
-      /village\s*grocer/i,
-      /tesco/i,
-      /giant/i,
-      /aeon/i,
-      /carrefour/i,
-      /lotus/i,
-      /mydin/i
-    ];
-
-    for (const pattern of storePatterns) {
-      const match = description.match(pattern);
-      if (match) {
-        return match[0];
-      }
+    if (travelSpending.categories.currency_exchange > 0) {
+      categories.push('travel_cards', 'multi_currency_accounts');
     }
-
-    return null;
+    
+    if (travelSpending.categories.airlines > 0 || travelSpending.categories.hotels > 0) {
+      categories.push('travel_cards', 'travel_insurance', 'air_miles_cards');
+    }
+    
+    if (travelSpending.categories.travel_agencies > 0) {
+      categories.push('travel_cards', 'booking_rewards');
+    }
+    
+    if (travelSpending.totalAmount > 5000) {
+      categories.push('premium_travel_cards', 'travel_insurance');
+    }
+    
+    return categories;
   }
 
-  // Helper method to extract fuel station name from transaction description
-  extractStationName(description) {
-    if (!description) return null;
-    
-    const stationPatterns = [
-      /petronas/i,
-      /shell/i,
-      /caltex/i,
-      /petron/i,
-      /bhp/i
-    ];
-
-    for (const pattern of stationPatterns) {
-      const match = description.match(pattern);
-      if (match) {
-        return match[0];
-      }
-    }
-
-    return null;
-  }
-
-  // Wealth Service Engagement Analysis
-  analyzeWealthEngagement(dataPoints, clientData) {
-    const { totalAssets, investmentDiversity, productCount } = dataPoints;
-    
-    if (totalAssets > 500000 && investmentDiversity < 0.3) {
-      return {
-        text: `High net worth customer (RM${this.formatCurrency(totalAssets)}) with limited investment diversity - wealth management opportunity`,
-        priority: 'HIGH',
-        type: 'wealth_management',
-        confidence: 0.9,
-        products: ['Wealth Management', 'Portfolio Diversification', 'Investment Advisory'],
-        estimatedValue: totalAssets * 0.1, // 10% of assets for management
-        dataPoints: { totalAssets: totalAssets, investmentDiversity: investmentDiversity }
-      };
-    }
-    
-    if (totalAssets > 200000 && productCount < 3) {
-      return {
-        text: `High-value customer with only ${productCount} products - cross-selling opportunity`,
-        priority: 'HIGH',
-        type: 'cross_selling',
-        confidence: 0.8,
-        products: ['Insurance', 'Investment Products', 'Credit Cards'],
-        estimatedValue: 30000,
-        dataPoints: { totalAssets: totalAssets, productCount: productCount }
-      };
-    }
-    
-    return null;
-  }
-
-  // Credit Card Usage Pattern Analysis
-  analyzeCreditCardUsage(dataPoints, clientData) {
-    const { creditUtilization, totalAssets } = dataPoints;
-    
-    if (creditUtilization < 0.2 && totalAssets > 100000) {
-      return {
-        text: `Low credit utilization (${(creditUtilization * 100).toFixed(1)}%) despite high assets - credit expansion opportunity`,
-        priority: 'MEDIUM',
-        type: 'credit_expansion',
-        confidence: 0.8,
-        products: ['Premium Credit Card', 'Credit Line Increase', 'Rewards Program'],
-        estimatedValue: 50000,
-        dataPoints: { creditUtilization: creditUtilization, totalAssets: totalAssets }
-      };
-    }
-    
-    if (creditUtilization > 0.8) {
-      return {
-        text: `High credit utilization (${(creditUtilization * 100).toFixed(1)}%) - debt consolidation opportunity`,
-        priority: 'HIGH',
-        type: 'debt_consolidation',
-        confidence: 0.9,
-        products: ['Personal Loan', 'Debt Consolidation', 'Balance Transfer'],
-        estimatedValue: 75000,
-        dataPoints: { creditUtilization: creditUtilization }
-      };
-    }
-    
-    return null;
-  }
-
-  // Investment Behavior Analysis
-  analyzeInvestmentBehavior(dataPoints, clientData) {
-    const { investmentDiversity, totalAssets, avgCashflow } = dataPoints;
-    
-    if (investmentDiversity < 0.2 && avgCashflow > 5000) {
-      return {
-        text: `Regular saver with low investment diversity - investment education opportunity`,
-        priority: 'MEDIUM',
-        type: 'investment_education',
-        confidence: 0.8,
-        products: ['Investment Advisory', 'Unit Trusts', 'Fixed Deposits'],
-        estimatedValue: avgCashflow * 6, // 6 months of cashflow
-        dataPoints: { investmentDiversity: investmentDiversity, avgCashflow: avgCashflow }
-      };
-    }
-    
-    if (totalAssets > 300000 && investmentDiversity > 0.7) {
-      return {
-        text: `Sophisticated investor with diverse portfolio - premium investment services opportunity`,
-        priority: 'HIGH',
-        type: 'premium_investment',
-        confidence: 0.9,
-        products: ['Private Banking', 'Alternative Investments', 'Portfolio Management'],
-        estimatedValue: totalAssets * 0.15, // 15% of assets
-        dataPoints: { totalAssets: totalAssets, investmentDiversity: investmentDiversity }
-      };
-    }
-    
-    return null;
-  }
-
-  // Risk Profile vs Behavior Mismatch Analysis
-  analyzeRiskMismatch(dataPoints, clientData) {
-    const { riskProfile, investmentDiversity, creditUtilization, totalAssets } = dataPoints;
-    
-    if (riskProfile === 'Conservative' && creditUtilization > 0.7) {
-      return {
-        text: `Conservative risk profile but high credit utilization (${(creditUtilization * 100).toFixed(1)}%) - risk assessment needed`,
-        priority: 'HIGH',
-        type: 'risk_mismatch',
-        confidence: 0.9,
-        products: ['Financial Planning', 'Debt Counseling', 'Risk Assessment'],
-        estimatedValue: 25000,
-        dataPoints: { riskProfile: riskProfile, creditUtilization: creditUtilization }
-      };
-    }
-    
-    if (riskProfile === 'Aggressive' && investmentDiversity < 0.3) {
-      return {
-        text: `Aggressive risk profile but low investment diversity - portfolio optimization opportunity`,
-        priority: 'MEDIUM',
-        type: 'portfolio_optimization',
-        confidence: 0.8,
-        products: ['Portfolio Diversification', 'Alternative Investments', 'Investment Advisory'],
-        estimatedValue: totalAssets * 0.2, // 20% of assets
-        dataPoints: { riskProfile: riskProfile, investmentDiversity: investmentDiversity }
-      };
-    }
-    
-    return null;
-  }
-
-  // Helper methods for data analysis
-  calculateCashflowStability(monthlyCashflow) {
-    if (!monthlyCashflow || monthlyCashflow.length < 2) return 0.5;
+  // Helper methods
+  calculateAgeFromNRIC(nric) {
+    if (!nric || nric.length < 6) return 30;
     
     try {
-      const mean = monthlyCashflow.reduce((a, b) => a + b, 0) / monthlyCashflow.length;
-      const variance = monthlyCashflow.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / monthlyCashflow.length;
-      const stdDev = Math.sqrt(variance);
-      const coefficientOfVariation = stdDev / Math.max(mean, 1);
+      const year = parseInt(nric.substring(0, 2));
+      const month = parseInt(nric.substring(2, 4));
+      const day = parseInt(nric.substring(4, 6));
       
-      return Math.max(0, 1 - Math.min(coefficientOfVariation, 1));
+      // Assume 2000s for now
+      const birthYear = 2000 + year;
+      const birthDate = new Date(birthYear, month - 1, day);
+      const today = new Date();
+      const age = today.getFullYear() - birthDate.getFullYear();
+      
+      return Math.max(18, Math.min(80, age));
     } catch (error) {
-      return 0.5;
+      return 30;
     }
   }
 
   calculateTotalLiabilities(clientData) {
-    try {
-      let total = 0;
-      
-      if (clientData.liabilities?.liabilities) {
-        total += clientData.liabilities.liabilities.reduce((sum, liability) => sum + (liability.balance || 0), 0);
-      }
-      
-      if (clientData.liabilities?.creditLines) {
-        total += clientData.liabilities.creditLines.reduce((sum, credit) => sum + (credit.usedAmount || 0), 0);
-      }
-      
-      return total;
-    } catch (error) {
-      return 0;
-    }
+    const dashboard = clientData.dashboard || {};
+    const accountBalances = dashboard.accountBalances || {};
+    
+    return (accountBalances.loans || 0) + (accountBalances.cards || 0);
   }
 
   calculateCreditUtilization(clientData) {
-    try {
-      if (!clientData.liabilities?.creditLines || clientData.liabilities.creditLines.length === 0) {
-        return 0;
-      }
-      
-      const totalLimit = clientData.liabilities.creditLines.reduce((sum, credit) => sum + (credit.limit || 0), 0);
-      const totalUsed = clientData.liabilities.creditLines.reduce((sum, credit) => sum + (credit.usedAmount || 0), 0);
-      
-      return totalLimit > 0 ? Math.min(totalUsed / totalLimit, 1) : 0;
-    } catch (error) {
-      return 0;
-    }
+    const dashboard = clientData.dashboard || {};
+    const accountBalances = dashboard.accountBalances || {};
+    
+    const cardBalance = accountBalances.cards || 0;
+    const cardLimit = 50000; // Assume default limit
+    
+    return cardLimit > 0 ? cardBalance / cardLimit : 0;
   }
 
   calculateInvestmentDiversity(holdings) {
     if (!holdings || holdings.length === 0) return 0;
-    
-    try {
-      const totalValue = holdings.reduce((sum, holding) => sum + (holding.balance || 0), 0);
-      if (totalValue === 0) return 0;
-      
-      // Calculate Herfindahl index for concentration
-      const concentration = holdings.reduce((sum, holding) => {
-        const share = (holding.balance || 0) / totalValue;
-        return sum + Math.pow(share, 2);
-      }, 0);
-      
-      // Convert to diversity score (0-1, higher = more diverse)
-      return Math.max(0, 1 - concentration);
-    } catch (error) {
-      return 0;
-    }
+    return Math.min(holdings.length / 3, 1); // Normalize to 0-1
   }
 
-  countActiveProducts(clientData) {
-    try {
-      let count = 0;
-      const accountBalances = clientData.dashboard?.accountBalances || {};
-      
-      if (accountBalances.casa > 0) count++;
-      if (accountBalances.fd > 0) count++;
-      if (accountBalances.loans > 0) count++;
-      if (accountBalances.cards > 0) count++;
-      
-      const holdings = clientData.investments?.holdings || [];
-      if (holdings.length > 0) count++;
-      
-      const liabilities = clientData.liabilities?.liabilities || [];
-      if (liabilities.length > 0) count++;
-      
-      return count;
-    } catch (error) {
-      return 0;
-    }
+  calculateEmergencyFundRatio(casaBalance, monthlyIncome) {
+    if (monthlyIncome === 0) return 0;
+    const requiredEmergencyFund = monthlyIncome * 3;
+    return requiredEmergencyFund > 0 ? (casaBalance / requiredEmergencyFund) * 100 : 0;
   }
 
-  countTransactions(transactions) {
-    try {
-      let count = 0;
-      
-      if (transactions.casaDeposits) count += transactions.casaDeposits.length;
-      if (transactions.casaWithdrawals) count += transactions.casaWithdrawals.length;
-      if (transactions.cardSpending) count += transactions.cardSpending.length;
-      if (transactions.cardPayments) count += transactions.cardPayments.length;
-      
-      return count;
-    } catch (error) {
-      return 0;
-    }
-  }
-
-  calculateAverageTransactionAmount(transactions) {
-    try {
-      let totalAmount = 0;
-      let totalCount = 0;
-      
-      if (transactions.casaDeposits) {
-        totalAmount += transactions.casaDeposits.reduce((sum, t) => sum + (t.amount || 0), 0);
-        totalCount += transactions.casaDeposits.length;
-      }
-      if (transactions.casaWithdrawals) {
-        totalAmount += transactions.casaWithdrawals.reduce((sum, t) => sum + (t.amount || 0), 0);
-        totalCount += transactions.casaWithdrawals.length;
-      }
-      if (transactions.cardSpending) {
-        totalAmount += transactions.cardSpending.reduce((sum, t) => sum + (t.amount || 0), 0);
-        totalCount += transactions.cardSpending.length;
-      }
-      if (transactions.cardPayments) {
-        totalAmount += transactions.cardPayments.reduce((sum, t) => sum + (t.amount || 0), 0);
-        totalCount += transactions.cardPayments.length;
-      }
-      
-      return totalCount > 0 ? totalAmount / totalCount : 0;
-    } catch (error) {
-      return 0;
-    }
-  }
-
-  parseCurrency(currencyString) {
-    try {
-      const match = currencyString.match(/RM\s*([\d,]+\.?\d*)/);
-      return match ? parseFloat(match[1].replace(/,/g, '')) : 0;
-    } catch (error) {
-      return 0;
-    }
+  calculateCashflowStability(monthlyIncome) {
+    // Simplified stability calculation
+    return monthlyIncome > 5000 ? 0.8 : monthlyIncome > 3000 ? 0.6 : 0.4;
   }
 
   formatCurrency(amount) {
@@ -1012,49 +540,57 @@ export class DataDrivenBankingAnalyzer {
   // Fallback insights based on data
   getFallbackInsights(clientData) {
     const dataPoints = this.extractDataPoints(clientData);
-    
-    const insights = [
-      {
-        insight: `${(dataPoints.cashRatio * 100).toFixed(1)}% cash - invest opportunity`,
-        reasoning: `High cash ratio of ${(dataPoints.cashRatio * 100).toFixed(1)}% indicates unused funds`,
+    const insights = [];
+
+    // Only generate meaningful insights based on actual financial analysis
+    if (dataPoints.emergencyFundRatio < 100) {
+      insights.push({
+        insight: `Emergency fund needs attention - ${Math.round(dataPoints.emergencyFundRatio)}% coverage`,
+        reasoning: `Your emergency fund should cover 3 months of expenses (RM${(dataPoints.monthlyIncome * 3).toLocaleString()}). Currently you have RM${dataPoints.casaBalance.toLocaleString()}.`,
+        priority: 'HIGH',
+        type: 'emergency_fund_analysis',
+        confidence: 0.8,
+        estimatedValue: dataPoints.monthlyIncome * 3 - dataPoints.casaBalance,
+        dataPoints: { emergencyFundRatio: dataPoints.emergencyFundRatio, monthlyIncome: dataPoints.monthlyIncome, casaBalance: dataPoints.casaBalance }
+      });
+    }
+
+    if (dataPoints.casaBalance > 50000 && dataPoints.investmentRatio < 0.3) {
+      insights.push({
+        insight: `High cash reserves (RM${dataPoints.casaBalance.toLocaleString()}) with low investment allocation`,
+        reasoning: `You have RM${dataPoints.casaBalance.toLocaleString()} in savings but only ${(dataPoints.investmentRatio * 100).toFixed(1)}% in investments. Consider diversifying for better returns.`,
         priority: 'MEDIUM',
-        type: 'cash_flow_analysis',
+        type: 'investment_opportunity',
         confidence: 0.7,
-        products: [],
-        estimatedValue: dataPoints.totalAssets * dataPoints.cashRatio * 0.7,
-        dataPoints: { cashRatio: dataPoints.cashRatio }
-      },
-      {
-        insight: `${(dataPoints.debtToIncomeRatio * 100).toFixed(1)}% debt ratio - ${dataPoints.debtToIncomeRatio < 0.3 ? 'excellent' : dataPoints.debtToIncomeRatio < 0.5 ? 'good' : 'needs attention'}`,
-        reasoning: `Debt-to-income ratio of ${(dataPoints.debtToIncomeRatio * 100).toFixed(1)}% shows ${dataPoints.debtToIncomeRatio < 0.3 ? 'strong' : dataPoints.debtToIncomeRatio < 0.5 ? 'manageable' : 'concerning'} credit health`,
-        priority: 'MEDIUM',
+        estimatedValue: Math.min(dataPoints.casaBalance * 0.6, 100000),
+        dataPoints: { casaBalance: dataPoints.casaBalance, investmentRatio: dataPoints.investmentRatio }
+      });
+    }
+
+    if (dataPoints.creditUtilization > 0.8) {
+      insights.push({
+        insight: `High credit utilization (${(dataPoints.creditUtilization * 100).toFixed(1)}%) - debt consolidation opportunity`,
+        reasoning: `Credit utilization of ${(dataPoints.creditUtilization * 100).toFixed(1)}% is very high. Consider debt consolidation to reduce interest costs.`,
+        priority: 'HIGH',
         type: 'credit_analysis',
-        confidence: 0.6,
-        products: [],
-        estimatedValue: 75000,
-        dataPoints: { debtToIncomeRatio: dataPoints.debtToIncomeRatio }
-      },
-      {
-        insight: `RM${this.formatCurrency(dataPoints.netWorth)} net worth - ${dataPoints.netWorth > 500000 ? 'high value' : dataPoints.netWorth > 100000 ? 'moderate' : 'building'} client`,
-        reasoning: `Total net worth of RM${this.formatCurrency(dataPoints.netWorth)} indicates ${dataPoints.netWorth > 500000 ? 'premium' : dataPoints.netWorth > 100000 ? 'growth' : 'foundation'} segment`,
+        confidence: 0.8,
+        estimatedValue: dataPoints.cardBalance,
+        dataPoints: { creditUtilization: dataPoints.creditUtilization, cardBalance: dataPoints.cardBalance }
+      });
+    }
+
+    // If no meaningful insights found, provide a basic financial overview
+    if (insights.length === 0) {
+      insights.push({
+        insight: `Financial profile analyzed - RM${dataPoints.netWorth.toLocaleString()} net worth`,
+        reasoning: `Based on your financial data, we've identified opportunities for wealth optimization and risk management.`,
         priority: 'LOW',
         type: 'wealth_analysis',
         confidence: 0.5,
-        products: [],
-        estimatedValue: dataPoints.netWorth * 0.1,
+        estimatedValue: dataPoints.netWorth * 0.05,
         dataPoints: { netWorth: dataPoints.netWorth }
-      },
-      {
-        insight: `RM${this.formatCurrency(dataPoints.avgCashflow)}/month - ${dataPoints.avgCashflow > 8000 ? 'strong' : 'steady'} income`,
-        reasoning: `Monthly cash flow of RM${this.formatCurrency(dataPoints.avgCashflow)} shows ${dataPoints.avgCashflow > 8000 ? 'high' : 'stable'} earning capacity`,
-        priority: 'LOW',
-        type: 'behavior_analysis',
-        confidence: 0.4,
-        products: [],
-        estimatedValue: 20000,
-        dataPoints: { avgCashflow: dataPoints.avgCashflow }
-      }
-    ];
+      });
+    }
 
     return insights;
   }
@@ -1272,151 +808,115 @@ export async function analyzeClientWithGemini(clientProfile, transactions, follo
   if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY_HERE') {
     throw new Error('Gemini API key not configured. Please set the GEMINI_API_KEY environment variable or update the default key in the code.');
   }
+  
   // Use the latest supported Gemini model
   const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
   
-  // Prepare the client data for analysis
-  const clientDataForAnalysis = {
-    client: {
-      name: clientProfile.name || clientProfile.client?.name || 'Unknown',
-      nric: clientProfile.nric || clientProfile.client?.nric || 'Unknown',
-      riskProfile: clientProfile.risk_profile || clientProfile.client?.riskProfile || 'Unknown',
-      status: clientProfile.status || clientProfile.client?.status || 'Unknown',
-      nationality: clientProfile.nationality || 'Unknown',
-      gender: clientProfile.gender || 'Unknown',
-      maritalStatus: clientProfile.marital_status || 'Unknown',
-      employmentStatus: clientProfile.employment_status || 'Unknown',
-      creditScore: clientProfile.credit_score || 'Unknown',
-      dsrRatio: clientProfile.dsr_ratio || 'Unknown'
-    },
-    financial: {
-      netWorth: clientProfile.net_worth || clientProfile.financial?.netWorth || 'RM 0',
-      assetUtilization: clientProfile.asset_utilization || clientProfile.financial?.assetUtilization || 0,
-      totalAssets: clientProfile.total_assets || 0,
-      totalLiabilities: clientProfile.total_liabilities || 0,
-      monthlyIncome: clientProfile.monthly_income || 0,
-      monthlyExpenses: clientProfile.monthly_expenses || 0
-    },
-    accountBalances: {
-      casa: clientProfile.casa_balance || clientProfile.dashboard?.accountBalances?.casa || 0,
-      fd: clientProfile.fd_balance || clientProfile.dashboard?.accountBalances?.fd || 0,
-      loans: clientProfile.loans_balance || clientProfile.dashboard?.accountBalances?.loans || 0,
-      cards: clientProfile.cards_balance || clientProfile.dashboard?.accountBalances?.cards || 0
-    },
-    investments: {
-      holdings: clientProfile.investments?.holdings || [],
-      totalInvestmentValue: clientProfile.total_investment_value || 0,
-      investmentDiversity: clientProfile.investment_diversity || 0
-    },
-    liabilities: {
-      liabilities: clientProfile.liabilities?.liabilities || [],
-      creditLines: clientProfile.liabilities?.creditLines || [],
-      totalDebt: clientProfile.total_debt || 0,
-      creditUtilization: clientProfile.credit_utilization || 0
-    },
-    behavioral: {
-      transactionFrequency: clientProfile.transaction_frequency || 0,
-      averageTransactionAmount: clientProfile.average_transaction_amount || 0,
-      preferredChannels: clientProfile.preferred_channels || [],
-      spendingCategories: clientProfile.spending_categories || []
-    },
-    transactions: transactions || [],
-    transactionSummary: {
-      totalTransactions: transactions ? transactions.length : 0,
-      totalSpent: transactions ? transactions.reduce((sum, t) => sum + Math.abs(t.amount || 0), 0) : 0,
-      averageAmount: transactions && transactions.length > 0 ? transactions.reduce((sum, t) => sum + Math.abs(t.amount || 0), 0) / transactions.length : 0,
-      categories: transactions ? [...new Set(transactions.map(t => t.category).filter(Boolean))] : [],
-      merchants: transactions ? [...new Set(transactions.map(t => t.description).filter(Boolean))] : []
-    }
-  };
+  try {
+    console.log('Analyzing client with Gemini:', {
+      clientName: clientProfile.name,
+      transactionCount: transactions ? transactions.length : 0,
+      hasTransactions: !!transactions && transactions.length > 0
+    });
 
-  console.log('Sending comprehensive client data to Gemini:', {
-    clientName: clientDataForAnalysis.client.name,
-    totalTransactions: clientDataForAnalysis.transactionSummary.totalTransactions,
-    totalSpent: clientDataForAnalysis.transactionSummary.totalSpent,
-    categories: clientDataForAnalysis.transactionSummary.categories,
-    accountBalances: clientDataForAnalysis.accountBalances
-  });
+    // Create the prompt for Gemini
+    const basePrompt = `You are a financial product recommendation engine for a Malaysian bank. Your role is to analyze client transaction data and provide specific, actionable product recommendations based on actual spending patterns.
 
-  // Create the prompt for Gemini
-  const basePrompt = `You are an expert banking AI assistant. Analyze this client data and provide 3 CONCISE factual observations for quick client meetings.
+TRANSACTION ANALYSIS:
+${(transactions && Array.isArray(transactions) && transactions.length > 0)
+  ? transactions.map(t => `- ${t.transaction_date}: RM${Math.abs(t.amount)} on ${t.description} (${t.category}) via ${t.channel}`).join('\n')
+  : '- No transaction data available'}
 
-CLIENT DATA:
-${JSON.stringify(clientDataForAnalysis, null, 2)}
+CLIENT PROFILE:
+- NRIC: ${clientProfile.nric || 'Not provided'}
+- Name: ${clientProfile.name || 'Not provided'}
+- Status: ${clientProfile.status || 'Not provided'}
+- Risk Profile: ${clientProfile.risk_profile || 'Not provided'}
+- Credit Score: ${clientProfile.credit_score || 'Not provided'}
 
-REQUIREMENTS:
-- Keep each insight under 15 words
-- Focus on SIGNIFICANT spending above normal levels
-- Show EXACT totals only (no explanatory text)
-- Highlight banking-relevant factors (credit risk, product gaps, client segments)
-- Show amounts that indicate premium lifestyle or high disposable income
-- Include risk factors, investment gaps, digital adoption patterns
-- Use EXACT amounts from transaction data - do not round or approximate
-- NO normal or average spending patterns
-- NO vague summaries or generic totals
-- NO promotional language or product recommendations in insights
+Use the following logic to guide your recommendations:
 
-Provide response in this EXACT JSON format:
+1. **Salary & Income**: If monthly income > RM5000, recommend premium products. If > RM8000, recommend private banking services.
+
+2. **Spending Behavior**: 
+   - Groceries > RM1000/month: Recommend grocery rewards credit card
+   - Dining > RM800/month: Recommend dining rewards credit card
+   - Online shopping > RM500/month: Recommend e-commerce rewards card
+
+3. **Travel & International**: 
+   - Grab/travel spending > RM500/month: Recommend transport rewards card
+   - FX transactions: Recommend multi-currency account
+
+4. **Credit & Lending**: 
+   - High credit score (>750): Recommend premium credit cards
+   - Low credit utilization: Recommend credit limit increase
+
+5. **Digital Engagement**: 
+   - Online transactions > 50%: Recommend digital banking features
+   - ATM usage > RM1000/month: Recommend mobile payment solutions
+
+6. **Life Stage Indicators**: 
+   - Age 25-35: Recommend investment products
+   - Age 35-50: Recommend insurance products
+   - Age 50+: Recommend retirement planning
+
+7. **Investment & Savings**: 
+   - No investments: Recommend unit trust products
+   - Low savings: Recommend automated savings plans
+
+8. **Risk Profile Alignment**: 
+   - Conservative: Recommend fixed deposits
+   - Balanced: Recommend balanced unit trusts
+   - Aggressive: Recommend equity products
+
+CRITICAL REQUIREMENTS:
+- Use ONLY exact amounts from the transaction data provided
+- Do NOT approximate, round, or make up any numbers
+- If no transaction data is available, focus on client profile data only
+- Each insight must be under 15 words
+- Each recommendation must be specific and actionable
+- Include exact amounts and merchant names when available
+- Focus on significant patterns that indicate product opportunities
+
+EXAMPLE INSIGHTS (use exact amounts from data):
+- "RM830 spent on Grab in June"
+- "RM156.80 grocery spending at Tesco"
+- "RM450 online shopping at Shopee"
+
+EXAMPLE RECOMMENDATIONS:
+- "Transport Rewards Credit Card - 5% cashback on transport spending of RM830"
+- "Grocery Rewards Card - 3% cashback on Tesco spending of RM156.80"
+- "E-commerce Card - 2% cashback on Shopee spending of RM450"
+
+JSON FORMAT:
 {
-  "summary": [
-    "Brief financial overview",
-    "Key behavioral pattern", 
-    "Main opportunity/risk"
-  ],
+  "summary": "Brief client overview based on available data",
   "insights": [
     {
-      "insight": "Pure factual observation 1",
-      "reasoning": "Specific data point that supports this observation"
-    },
-    {
-      "insight": "Pure factual observation 2",
-      "reasoning": "Specific data point that supports this observation"
-    },
-    {
-      "insight": "Pure factual observation 3", 
-      "reasoning": "Specific data point that supports this observation"
+      "insight": "Specific factual observation with exact amounts",
+      "reasoning": "Data points that support this insight"
     }
   ],
   "recommendations": [
-    "Product recommendation 1",
-    "Product recommendation 2",
-    "Product recommendation 3"
+    {
+      "product": "Specific product name",
+      "reasoning": "Why this product is recommended based on data"
+    }
   ]
 }
 
-INSIGHTS SHOULD BE SIGNIFICANT TOTALS LIKE:
-- "RM830 on Grab"
-- "RM15,000 on luxury purchases"
-- "RM8,000 on travel"
-- "RM50,000 idle cash"
-- "85% credit utilization"
-- "No credit card usage"
-- "RM500K net worth"
-- "3 mobile logins/month"
-- "RM2,500/month dining"
-- "No investment products"
+REQUIREMENTS:
+- Only use data that is explicitly provided
+- If no transaction data exists, state "No transaction data available" as an insight
+- Focus on transaction patterns, exact amounts, and specific merchants
+- Avoid generic financial metrics like net worth, total assets, CASA balance
+- Make insights purely factual observations
+- Make recommendations actionable and specific
+- Provide ONLY the 3 BEST insights based on significance and banking value
+- Prioritize insights that indicate clear product opportunities`;
 
-AVOID IN INSIGHTS:
-- Explanatory text like "indicates high transport costs"
-- Normal spending amounts (RM500 on groceries, RM200 on fuel)
-- Vague summaries like "significant spending across multiple categories"
-- Generic totals like "total spending RM7,661.80"
-- "opportunity", "recommend", "should", "need", "consider"
-- Any promotional language
-- Any product suggestions
-- Product names or specific recommendations
+    const fullPrompt = followUp ? `${basePrompt}\n\nFOLLOW-UP QUESTION: ${followUp}\n\nPlease address this specific question in your analysis.` : basePrompt;
 
-IMPORTANT: Use EXACT amounts from transaction data. Do not round, approximate, or aggregate amounts. Be precise:
-- Use exact transaction amounts: "RM450 and RM380 on Grab"
-- Use exact totals: "RM830 total on Grab"
-- Use exact transaction counts: "2 Grab transactions"
-- Use exact dates: "June 10 and June 17"
-- Do NOT round or approximate amounts
-- Do NOT use vague terms like "frequent", "often", "many", "several"`;
-
-  const fullPrompt = followUp ? `${basePrompt}\n\nFOLLOW-UP QUESTION: ${followUp}\n\nPlease address this specific question in your analysis.` : basePrompt;
-
-  try {
     const response = await fetch(GEMINI_API_URL, {
       method: 'POST',
       headers: {

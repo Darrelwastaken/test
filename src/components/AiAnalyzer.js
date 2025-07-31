@@ -12,6 +12,14 @@ export default function AiAnalyzer({ clientData }) {
     setLoading(true);
     setError('');
     
+    // Debug: Log the clientData structure
+    console.log('AiAnalyzer - clientData structure:', {
+      nric: clientData?.nric,
+      hasTransactions: !!clientData?.transactions,
+      transactionCount: clientData?.transactions?.length || 0,
+      transactions: clientData?.transactions?.slice(0, 3) // Show first 3 transactions
+    });
+    
     try {
       let result;
       if (forceRefresh) {
