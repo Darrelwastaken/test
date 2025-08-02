@@ -158,7 +158,7 @@ export async function generateAndSaveInsights(clientData) {
     console.log(`Generating new AI insights for client ${nric} - data has changed`);
 
     // Generate new insights using our improved banking-focused analyzer
-    const result = await analyzeClientWithGemini(clientData);
+    const result = await analyzeClientWithGemini(clientData, clientData.transactions);
     
     // Save to database
     const saveSuccess = await saveAIInsights(nric, result.insights, result.summary, clientData);
@@ -187,7 +187,7 @@ export async function forceRegenerateInsights(clientData) {
     }
 
     // Generate new insights using our improved banking-focused analyzer
-    const result = await analyzeClientWithGemini(clientData);
+    const result = await analyzeClientWithGemini(clientData, clientData.transactions);
     
     // Save to database
     const saveSuccess = await saveAIInsights(nric, result.insights, result.summary, clientData);
@@ -241,7 +241,7 @@ export async function clearCacheAndRegenerate(clientData) {
     await deleteAIInsights(nric);
     
     // Generate new insights using our improved banking-focused analyzer
-    const result = await analyzeClientWithGemini(clientData);
+    const result = await analyzeClientWithGemini(clientData, clientData.transactions);
     
     // Save to database
     const saveSuccess = await saveAIInsights(nric, result.insights, result.summary, clientData);

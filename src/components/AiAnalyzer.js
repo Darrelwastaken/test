@@ -94,7 +94,15 @@ export default function AiAnalyzer({ clientData }) {
             fontSize: '14px',
             lineHeight: '1.3'
           }}>
-            {item.insight}
+            <div style={{ fontWeight: '600', marginBottom: '2px', color: '#212529' }}>
+              {item.insight}
+            </div>
+            {item.reasoning && (
+              <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>
+                {item.reasoning}
+              </div>
+            )}
+            {/* Product recommendations are now shown only in the Product Recommendations page */}
           </div>
         );
       }

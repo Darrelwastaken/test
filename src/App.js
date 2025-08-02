@@ -17,6 +17,9 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { format, parse } from 'date-fns';
 import FinancialSummary from './FinancialSummary';
 import ProductRecommendations from './ProductRecommendations';
+import ProductsPage from './ProductsPage';
+import EditProductsPage from './EditProductsPage';
+import AddProductPage from './AddProductPage';
 import TransactionBehavior from './TransactionBehavior';
 import LiabilitiesCredit from './LiabilitiesCredit';
 import InvestmentsPortfolio from './InvestmentsPortfolio';
@@ -528,6 +531,9 @@ function App() {
         <Route path="/dashboard" element={loggedInUser ? <ClientSelection user={loggedInUser} onLogout={handleLogout} /> : <Login noLayout={!loggedInUser} onLogin={handleLogin} />} />
         <Route path="/financial-summary/:nric" element={<FinancialSummary />} />
         <Route path="/product-recommendations/:nric" element={<ProductRecommendations />} />
+        <Route path="/products/:nric" element={<ProductsPage />} />
+        <Route path="/edit-products/:nric" element={<EditProductsPage />} />
+        <Route path="/add-product/:nric" element={<AddProductPage />} />
         <Route path="/transaction-behavior/:nric" element={<TransactionBehavior />} />
         <Route path="/liabilities-credit/:nric" element={<LiabilitiesCredit />} />
         <Route path="/investments-portfolio/:nric" element={<InvestmentsPortfolio />} />

@@ -908,11 +908,13 @@ function cleanArray(arr) {
   
   return arr
     .map(item => {
-      // Handle new insight format with reasoning
+      // Handle new insight format with reasoning and product
       if (item && typeof item === 'object' && item.insight && item.reasoning) {
         return {
           insight: cleanText(item.insight),
-          reasoning: cleanText(item.reasoning)
+          reasoning: cleanText(item.reasoning),
+          product: item.product ? cleanText(item.product) : undefined,
+          productReasoning: item.productReasoning ? cleanText(item.productReasoning) : undefined
         };
       }
       // Handle legacy string format
@@ -1014,59 +1016,134 @@ CLIENT PROFILE:
 - Risk Profile: ${clientProfile.risk_profile || 'Not provided'}
 - Credit Score: ${clientProfile.credit_score || 'Not provided'}
 
-Use the following logic to guide your recommendations:
+AVAILABLE PRODUCTS IN OUR DATABASE:
+You MUST recommend products that exist in our database. Here are the key product categories available:
 
-1. **Salary & Income**: If monthly income > RM5000, recommend premium products. If > RM8000, recommend private banking services.
+1. **Personal Banking (Savings & Current Accounts)**:
+   - AmVault Savings Account / Account‑i (High-yield savings, 3.0-4.2% returns)
+   - TRUE Savers Account / Account‑i (Bonus interest for regular deposits, 2.8-3.8% returns)
+   - Basic Savings Account / Account‑i (Traditional savings, 2.0-2.5% returns)
+   - AmWafeeq Account‑i (Islamic profit sharing, 2.5-3.5% returns)
+   - eFlex Savings Account‑i (Flexible savings, 2.8-3.2% returns)
+   - AmGenius (Smart savings with rewards, 3.2-4.0% returns)
+   - Current Account / Account‑i (Daily transactions, 0.5-1.0% returns)
+   - Hybrid Current Account‑i (Combined current/savings features, 1.5-2.5% returns)
+   - Foreign Currency Accounts / Account‑i (Multi-currency, 1.0-3.5% returns)
 
-2. **Spending Behavior**: 
-   - Groceries > RM1000/month: Recommend grocery rewards credit card
-   - Dining > RM800/month: Recommend dining rewards credit card
-   - Online shopping > RM500/month: Recommend e-commerce rewards card
+2. **Term Deposits & Investments**:
+   - Term Deposit / Term Deposit‑i (Fixed-term deposits, 3.5-5.0% returns)
+   - AmQuantum Term Deposit‑i (Quantum-based deposits, 4.0-5.5% returns)
+   - Afhdal Term Deposit‑i (Premium term deposits, 4.5-6.0% returns)
+   - AmTDPlus‑i (Enhanced term deposits, 4.2-5.8% returns)
 
-3. **Travel & International**: 
-   - Grab/travel spending > RM500/month: Recommend transport rewards card
-   - FX transactions: Recommend multi-currency account
+3. **Credit Cards**:
+   - AmBank Enrich Visa Infinite & Platinum (Premium travel rewards)
+   - Visa Infinite, Visa Signature, Cash Rebate Visa Platinum (Range of Visa cards)
+   - BonusLink Visa Series (Gold, Platinum, Gold CARz, M-Series, True Visa)
+   - Mastercard Platinum, Gold CARz, World Mastercard (International acceptance)
+   - UnionPay Platinum (China and Asia-Pacific benefits)
+   - AmBank SIGNATURE Priority Banking Visa Infinite (Metal card for priority customers)
+   - AmBank Visa Debit Card (Cashless transactions and ATM withdrawals)
+   - NexG PrePaid Card (Controlled spending and online transactions)
 
-4. **Credit & Lending**: 
-   - High credit score (>750): Recommend premium credit cards
-   - Low credit utilization: Recommend credit limit increase
+4. **Loans & Financing**:
+   - Personal Financing / Financing‑i (Personal loans, 7.5-12.0% rates)
+   - Term Financing‑i (ASB/ASB2) (Islamic ASB financing, 4.5-6.5% rates)
+   - AmMoneyLine / AmMoneyLine‑i (Overdraft facility, 8.0-15.0% rates)
+   - Auto Financing (Vehicle financing, 3.2-4.8% rates)
+   - Home Loan Facility (Home financing, 3.5-4.5% rates)
+   - Home Link (Home equity financing, 4.0-5.5% rates)
+   - PR1MA / SPEF (First-time buyer financing, 3.8-4.8% rates)
+   - Property Link (Property investment financing, 4.2-5.2% rates)
+   - Commercial Property Financing (Commercial property financing, 4.8-6.0% rates)
+   - Skim Jaminan Kredit Perumahan (Housing credit guarantee, 3.8-4.8% rates)
 
-5. **Digital Engagement**: 
-   - Online transactions > 50%: Recommend digital banking features
-   - ATM usage > RM1000/month: Recommend mobile payment solutions
+5. **Wealth Management & Investments**:
+   - Unit Trusts via AmInvest (Professional managed funds, 6-15% returns)
+   - Direct Bond / Sukuk (Direct bond investment, 4-8% returns)
+   - Dual Currency Investments (Currency-linked investments, 5-12% returns)
+   - Equities (Direct equity investment, 8-20% returns)
+   - Smart Partnership Programme (SPP) (Partnership investment, 7-12% returns)
+   - Wealth Advisory Services (Professional wealth management)
+   - AmPrivate Banking (Exclusive private banking services)
+   - Priority Banking tiers (Tiered priority banking services)
+   - Will / Wasiat writing (Estate planning services)
+   - Legacy & estate planning (Comprehensive estate planning)
 
-6. **Life Stage Indicators**: 
-   - Age 25-35: Recommend investment products
-   - Age 35-50: Recommend insurance products
-   - Age 50+: Recommend retirement planning
+6. **Insurance & Takaful**:
+   - General Insurance (Vehicle, travel, personal accident, home, business coverage)
+   - Life Insurance (Savings, protection, legacy, credit-linked coverage)
+   - Family Takaful (Islamic life/family coverage)
 
-7. **Investment & Savings**: 
-   - No investments: Recommend unit trust products
-   - Low savings: Recommend automated savings plans
+7. **Corporate & Treasury**:
+   - SME & Corporate Banking (Business banking services)
+   - Cash management (Advanced cash management solutions)
+   - Trade finance (International trade finance solutions)
+   - Payroll solutions (HR and payroll management)
+   - Business current accounts (Business transaction accounts)
+   - Structured Products (Sophisticated investment products)
 
-8. **Risk Profile Alignment**: 
-   - Conservative: Recommend fixed deposits
-   - Balanced: Recommend balanced unit trusts
-   - Aggressive: Recommend equity products
+MANDATORY PRODUCT RECOMMENDATION RULES:
+EVERY insight MUST have a corresponding product recommendation from our database. Use these specific product mappings:
+
+1. **Salary & Income Patterns**:
+   - Salary credit > RM5000: "AmBank Enrich Visa Infinite & Platinum" with priority banking benefits
+   - Salary credit > RM8000: "AmPrivate Banking" with wealth management services
+   - Regular income: "TRUE Savers Account" with automated savings features
+
+2. **Spending Behavior**:
+   - Groceries > RM500/month: "BonusLink Visa Series" - rewards on grocery spending
+   - Dining > RM300/month: "Visa Infinite, Visa Signature, Cash Rebate Visa Platinum" - dining rewards
+   - Online shopping > RM200/month: "UnionPay Platinum" - online shopping benefits
+   - Transport > RM200/month: "Mastercard Platinum, Gold CARz, World Mastercard" - transport rewards
+
+3. **Travel & International**:
+   - FX transactions: "Foreign Currency Accounts" with competitive exchange rates
+   - Travel spending > RM1000: "AmBank Enrich Visa Infinite & Platinum" - travel rewards
+   - International transactions: "World Mastercard" with travel insurance
+
+4. **Credit & Lending**:
+   - Credit score > 750: "AmBank SIGNATURE Priority Banking Visa Infinite" with premium benefits
+   - Low credit utilization: "Personal Financing" - competitive rates from 7.5%
+   - New credit needs: "Personal Financing / Financing‑i" - flexible terms
+
+5. **Digital Engagement**:
+   - Online transactions > 50%: "eFlex Savings Account‑i" with digital features
+   - ATM usage > RM500/month: "AmBank Visa Debit Card" with contactless payments
+   - Digital adoption: "AmGenius" with smart banking features
+
+6. **Investment & Savings**:
+   - No investments: "Unit Trusts via AmInvest" - diversified portfolio options
+   - Low savings: "AmVault Savings Account" - high-yield savings with 3.0-4.2% returns
+   - Conservative profile: "Term Deposit / Term Deposit‑i" - guaranteed returns up to 5.0%
+   - Balanced profile: "AmQuantum Term Deposit‑i" - moderate risk, 4.0-5.5% returns
+   - Aggressive profile: "Equities" - higher returns, 8-20% potential
+
+7. **Insurance & Protection**:
+   - No insurance: "Life Insurance" - comprehensive life coverage
+   - Travel patterns: "General Insurance" - travel insurance coverage
+   - Health concerns: "Family Takaful" - Islamic health coverage
+
+8. **Business & Professional**:
+   - Business transactions: "SME & Corporate Banking" with business accounts
+   - Professional services: "Priority Banking tiers" with specialized support
 
 CRITICAL REQUIREMENTS:
+- EVERY insight MUST have a corresponding product recommendation from our database
 - Use ONLY exact amounts from the transaction data provided
 - Do NOT approximate, round, or make up any numbers
-- If no transaction data is available, focus on client profile data only
 - Each insight must be under 15 words
-- Each recommendation must be specific and actionable
+- Each product recommendation must be specific and actionable
 - Include exact amounts and merchant names when available
 - Focus on significant patterns that indicate product opportunities
+- If no transaction data exists, recommend basic products based on client profile
+- ONLY recommend products that exist in our database (listed above)
 
-EXAMPLE INSIGHTS (use exact amounts from data):
-- "RM830 spent on Grab in June"
-- "RM156.80 grocery spending at Tesco"
-- "RM450 online shopping at Shopee"
-
-EXAMPLE RECOMMENDATIONS:
-- "Transport Rewards Credit Card - 5% cashback on transport spending of RM830"
-- "Grocery Rewards Card - 3% cashback on Tesco spending of RM156.80"
-- "E-commerce Card - 2% cashback on Shopee spending of RM450"
+EXAMPLE INSIGHTS WITH PRODUCTS:
+- Insight: "RM830 spent on Grab in June" → Product: "Mastercard Platinum, Gold CARz, World Mastercard - transport rewards"
+- Insight: "RM156.80 grocery spending at Tesco" → Product: "BonusLink Visa Series - grocery rewards"
+- Insight: "RM450 online shopping at Shopee" → Product: "UnionPay Platinum - online shopping benefits"
+- Insight: "RM3500 salary credited monthly" → Product: "TRUE Savers Account - automated savings features"
 
 JSON FORMAT:
 {
@@ -1074,26 +1151,23 @@ JSON FORMAT:
   "insights": [
     {
       "insight": "Specific factual observation with exact amounts",
-      "reasoning": "Data points that support this insight"
-    }
-  ],
-  "recommendations": [
-    {
-      "product": "Specific product name",
-      "reasoning": "Why this product is recommended based on data"
+      "reasoning": "Data points that support this insight",
+      "product": "Specific product name from our database with benefits",
+      "productReasoning": "Why this specific product is recommended"
     }
   ]
 }
 
 REQUIREMENTS:
 - Only use data that is explicitly provided
-- If no transaction data exists, state "No transaction data available" as an insight
+- If no transaction data exists, recommend basic products based on client profile
 - Focus on transaction patterns, exact amounts, and specific merchants
-- Avoid generic financial metrics like net worth, total assets, CASA balance
 - Make insights purely factual observations
-- Make recommendations actionable and specific
-- Provide ONLY the 3 BEST insights based on significance and banking value
-- Prioritize insights that indicate clear product opportunities`;
+- Make product recommendations actionable and specific
+- Provide ONLY the 3 BEST insights with corresponding products
+- Prioritize insights that indicate clear product opportunities
+- Every insight must have a product recommendation from our database - NO EXCEPTIONS
+- ONLY recommend products that exist in our database (listed above)`;
 
     const fullPrompt = followUp ? `${basePrompt}\n\nFOLLOW-UP QUESTION: ${followUp}\n\nPlease address this specific question in your analysis.` : basePrompt;
 
@@ -1172,10 +1246,37 @@ REQUIREMENTS:
     console.log('Raw parsed response:', parsedResponse);
     
     // Clean the parsed response to remove any remaining JSON formatting
+    const cleanInsights = cleanArray(parsedResponse.insights || []);
+    
+    // Extract products from insights and create separate recommendations array
+    const recommendations = [];
+    const processedInsights = cleanInsights.map((insight, index) => {
+      // If insight has embedded product information, extract it
+      if (insight.product) {
+        recommendations.push({
+          name: insight.product,
+          reasoning: insight.productReasoning || insight.reasoning,
+          aiInsightIndex: index,
+          type: 'Product Recommendation',
+          priority: 'High'
+        });
+      }
+      
+      // Return insight with product info included (for display purposes)
+      return {
+        insight: insight.insight,
+        reasoning: insight.reasoning,
+        product: insight.product, // Keep product info in insight for display
+        productReasoning: insight.productReasoning,
+        type: insight.type || 'Analysis',
+        priority: insight.priority || 'MEDIUM'
+      };
+    });
+    
     const cleanResponse = {
       summary: cleanArray(parsedResponse.summary || []),
-      insights: cleanArray(parsedResponse.insights || []),
-      recommendations: cleanArray(parsedResponse.recommendations || [])
+      insights: processedInsights,
+      recommendations: recommendations
     };
 
     console.log('Clean response:', cleanResponse);

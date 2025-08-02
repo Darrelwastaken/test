@@ -47,12 +47,12 @@ export default function AIInsightsSummary({ aiInsights, recommendations }) {
       marginBottom: '24px'
     }}>
       <h2 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '20px' }}>
-        AI Analysis & Product Recommendations
+        AI Analysis Insights
       </h2>
       
       <div style={{ fontSize: '14px', color: '#666', marginBottom: '20px' }}>
         Our AI analysis identified {aiInsights.length} key insights about your financial profile. 
-        Below are the specific AmBank products recommended based on each insight.
+        Visit the Product Recommendations page to see personalized product suggestions based on these insights.
       </div>
 
       <div style={{ display: 'grid', gap: '20px' }}>
@@ -112,46 +112,7 @@ export default function AIInsightsSummary({ aiInsights, recommendations }) {
               )}
             </div>
 
-            {/* Related Products */}
-            {insight.relatedProducts && insight.relatedProducts.length > 0 && (
-              <div>
-                <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#374151' }}>
-                  Recommended Products:
-                </div>
-                <div style={{ display: 'grid', gap: '8px' }}>
-                  {insight.relatedProducts.map((product, productIndex) => (
-                    <div key={productIndex} style={{
-                      background: '#fff',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '6px',
-                      padding: '12px',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center'
-                    }}>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: '14px', fontWeight: '600', color: '#111827', marginBottom: '2px' }}>
-                          {product.name}
-                        </div>
-                        <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                          {product.type} • {product.expectedReturn || product.monthlyPremium || product.interestRate}
-                        </div>
-                      </div>
-                      <div style={{
-                        background: product.priority === 'High' ? '#dcfce7' : product.priority === 'Medium' ? '#fef3c7' : '#f3f4f6',
-                        color: product.priority === 'High' ? '#166534' : product.priority === 'Medium' ? '#92400e' : '#374151',
-                        padding: '4px 8px',
-                        borderRadius: '12px',
-                        fontSize: '11px',
-                        fontWeight: '600'
-                      }}>
-                        {product.priority}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Product recommendations are now shown only in the Product Recommendations page */}
 
             {/* Estimated Value */}
             {insight.estimatedValue && (
@@ -194,8 +155,10 @@ export default function AIInsightsSummary({ aiInsights, recommendations }) {
             </div>
           </div>
           <div>
-            <div style={{ color: '#64748b' }}>Products Recommended</div>
-            <div style={{ fontWeight: '600', color: '#334155' }}>{recommendations.length}</div>
+            <div style={{ color: '#64748b' }}>Medium Priority</div>
+            <div style={{ fontWeight: '600', color: '#92400e' }}>
+              {aiInsights.filter(i => i.priority === 'MEDIUM').length}
+            </div>
           </div>
           <div>
             <div style={{ color: '#64748b' }}>Total Opportunity</div>

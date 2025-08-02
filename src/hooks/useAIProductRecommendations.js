@@ -158,6 +158,25 @@ export const useAIProductRecommendations = (clientNric) => {
         // Generate recommendations based on AI insights
         const aiBasedRecommendations = generateRecommendationsFromAIInsights(insights, clientData, riskProfile, investmentProfile);
         setRecommendations(aiBasedRecommendations);
+        
+        // Also update insights to include product information for display
+        const insightsWithProducts = insights.map((insight, index) => {
+          // If insight has product information, ensure it's properly formatted
+          if (insight.product) {
+            return {
+              ...insight,
+              recommendedProduct: {
+                name: insight.product,
+                description: insight.productReasoning || insight.reasoning,
+                reasoning: insight.productReasoning || insight.reasoning,
+                type: 'Product Recommendation'
+              }
+            };
+          }
+          return insight;
+        });
+        
+        setAiInsights(insightsWithProducts);
 
       } catch (err) {
         console.error('Error generating AI-based recommendations:', err);
@@ -181,7 +200,21 @@ function generateRecommendationsFromAIInsights(insights, clientData, riskProfile
   
   // Use recommended products from AI insights
   insights.forEach((insight, index) => {
-    if (insight.recommendedProduct) {
+    if (insight.product) {
+      // Handle new format with embedded product information
+      recommendations.push({
+        id: `ai_recommendation_${index}`,
+        name: insight.product,
+        description: insight.productReasoning || insight.reasoning,
+        reasoning: insight.productReasoning || insight.reasoning,
+        type: 'Product Recommendation',
+        priority: mapPriority(insight.priority || 'MEDIUM'),
+        estimatedValue: insight.estimatedValue || 5000,
+        aiInsightIndex: index,
+        confidence: insight.confidence || 0.7
+      });
+    } else if (insight.recommendedProduct) {
+      // Handle legacy format
       recommendations.push({
         ...insight.recommendedProduct,
         priority: mapPriority(insight.priority || 'MEDIUM'),
