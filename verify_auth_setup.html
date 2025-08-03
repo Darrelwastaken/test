@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication System Verification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success { border-color: #4CAF50; background-color: #f1f8e9; }
+        .error { border-color: #f44336; background-color: #ffebee; }
+        .info { border-color: #2196F3; background-color: #e3f2fd; }
+        button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #1976D2; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .loading { color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Authentication System Verification</h1>
+        <p>This page helps you verify that your authentication system is working properly with the database.</p>
+
+        <div class="test-section info">
+            <h3>📋 Prerequisites Check</h3>
+            <p>Before running tests, make sure:</p>
+            <ul>
+                <li>✅ You've run the SQL script in Supabase to create the users table</li>
+                <li>✅ Your React app is running (npm start)</li>
+                <li>✅ You're logged into your Supabase dashboard</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 Manual Testing Steps</h3>
+            <p>Follow these steps to test your authentication system:</p>
+            
+            <h4>Step 1: Test User Registration</h4>
+            <ol>
+                <li>Go to your React app (usually http://localhost:3000)</li>
+                <li>Click "Sign Up"</li>
+                <li>Enter a test email (e.g., test@example.com)</li>
+                <li>Enter a password that meets requirements (e.g., TestPass123)</li>
+                <li>Click "Sign Up"</li>
+                <li><strong>Expected Result:</strong> Success message and form clears</li>
+            </ol>
+
+            <h4>Step 2: Test User Login</h4>
+            <ol>
+                <li>Click "Login"</li>
+                <li>Enter the same email and password</li>
+                <li>Click "Login"</li>
+                <li><strong>Expected Result:</strong> Success message and redirect to client selection</li>
+            </ol>
+
+            <h4>Step 3: Test Password Change</h4>
+            <ol>
+                <li>After logging in, go to Settings (gear icon)</li>
+                <li>Click "Change Password"</li>
+                <li>Enter current password</li>
+                <li>Enter new password (e.g., NewTestPass123)</li>
+                <li>Confirm new password</li>
+                <li>Click "Update Password"</li>
+                <li><strong>Expected Result:</strong> Success message</li>
+            </ol>
+
+            <h4>Step 4: Verify Database</h4>
+            <ol>
+                <li>Go to your Supabase Dashboard</li>
+                <li>Navigate to Table Editor</li>
+                <li>Select the "users" table</li>
+                <li><strong>Expected Result:</strong> You should see your test user with hashed password</li>
+            </ol>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 Database Verification</h3>
+            <p>Run this SQL query in your Supabase SQL Editor to verify the users table:</p>
+            <pre style="background: #f5f5f5; padding: 10px; border-radius: 3px;">
+-- Check if users table exists
+SELECT table_name FROM information_schema.tables 
+WHERE table_schema = 'public' AND table_name = 'users';
+
+-- View all users (for testing)
+SELECT id, email, role, created_at, last_login FROM users;
+
+-- Check table structure
+SELECT column_name, data_type, is_nullable 
+FROM information_schema.columns 
+WHERE table_name = 'users' 
+ORDER BY ordinal_position;
+            </pre>
+        </div>
+
+        <div class="test-section">
+            <h3>🐛 Troubleshooting</h3>
+            
+            <h4>Common Issues:</h4>
+            <ul>
+                <li><strong>"Table users does not exist"</strong> - Run the SQL script in Supabase</li>
+                <li><strong>"Authentication failed"</strong> - Check Supabase connection settings</li>
+                <li><strong>"Permission denied"</strong> - Check RLS (Row Level Security) settings</li>
+                <li><strong>"Network error"</strong> - Check internet connection and Supabase URL</li>
+            </ul>
+
+            <h4>Debug Steps:</h4>
+            <ol>
+                <li>Open browser DevTools (F12)</li>
+                <li>Check Console for errors</li>
+                <li>Check Network tab for failed requests</li>
+                <li>Verify Supabase URL and API key in supabaseClient.js</li>
+            </ol>
+        </div>
+
+        <div class="test-section success">
+            <h3>✅ Success Indicators</h3>
+            <p>Your authentication system is working if:</p>
+            <ul>
+                <li>✅ User registration completes without errors</li>
+                <li>✅ User can login with registered credentials</li>
+                <li>✅ User appears in Supabase users table</li>
+                <li>✅ Password change functionality works</li>
+                <li>✅ No console errors during authentication</li>
+                <li>✅ Loading states work properly</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>📞 Need Help?</h3>
+            <p>If you encounter issues:</p>
+            <ol>
+                <li>Check the browser console for error messages</li>
+                <li>Verify your Supabase connection settings</li>
+                <li>Ensure the users table was created successfully</li>
+                <li>Check the AUTHENTICATION_SETUP.md file for detailed instructions</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // Simple test to check if we can access the auth service
+        console.log('🔍 Authentication Verification Page Loaded');
+        console.log('💡 Follow the manual testing steps above to verify your system');
+        
+        // Check if we're in the right context
+        if (typeof window !== 'undefined') {
+            console.log('✅ Running in browser environment');
+        }
+    </script>
+</body>
+</html> 

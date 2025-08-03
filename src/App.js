@@ -27,6 +27,7 @@ import ProposalGenerator from './ProposalGenerator';
 import DocumentsReports from './DocumentsReports';
 import EditClientInfo from './EditClientInfoNew';
 import { testDatabaseConnection } from './utils/testDatabaseConnection';
+import { authService } from './services/authService';
 
 const datePickerInputStyle = {
   width: '100%',
@@ -156,6 +157,7 @@ function SignUp({ onSuccess, noLayout }) {
   });
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   function validateEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -171,10 +173,10 @@ function SignUp({ onSuccess, noLayout }) {
     setSuccess('');
   }
 
-
-
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
+    setIsLoading(true);
+    
     let newErrors = {};
     if (!validateEmail(form.email)) {
       newErrors.email = 'Invalid email address';
@@ -183,18 +185,25 @@ function SignUp({ onSuccess, noLayout }) {
       newErrors.password = 'Password must be at least 8 characters, include 1 number and 1 capital letter';
     }
 
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    if (users.find(u => u.email === form.email)) {
-      newErrors.email = 'Email is already registered';
-    }
     setErrors(newErrors);
+    
     if (Object.keys(newErrors).length === 0) {
-      users.push({ email: form.email, password: form.password });
-      localStorage.setItem('users', JSON.stringify(users));
-      setSuccess('Sign up successful! Please log in.');
-      setForm({ email: '', password: '' });
-      if (onSuccess) onSuccess();
+      try {
+        const result = await authService.register(form.email, form.password);
+        
+        if (result.success) {
+          setSuccess('Sign up successful! Please log in.');
+          setForm({ email: '', password: '' });
+          if (onSuccess) onSuccess();
+        } else {
+          setErrors({ email: result.error });
+        }
+      } catch (error) {
+        setErrors({ email: 'Registration failed. Please try again.' });
+      }
     }
+    
+    setIsLoading(false);
   }
 
   return noLayout ? (
@@ -259,18 +268,24 @@ function SignUp({ onSuccess, noLayout }) {
             {errors.password && <div style={{color:'#dc2626', fontSize: 12, marginTop: 4}}>{errors.password}</div>}
           </div>
 
-          <button type="submit" style={{ 
-            width: '100%',
-            background: '#e5e7eb', 
-            color: '#222', 
-            border: 'none', 
-            borderRadius: 8, 
-            padding: '14px 24px', 
-            fontWeight: 600, 
-            fontSize: 16, 
-            cursor: 'pointer',
-            transition: 'background-color 0.2s'
-          }}>Sign Up</button>
+          <button 
+            type="submit" 
+            disabled={isLoading}
+            style={{ 
+              width: '100%',
+              background: isLoading ? '#9ca3af' : '#e5e7eb', 
+              color: '#222', 
+              border: 'none', 
+              borderRadius: 8, 
+              padding: '14px 24px', 
+              fontWeight: 600, 
+              fontSize: 16, 
+              cursor: isLoading ? 'not-allowed' : 'pointer',
+              transition: 'background-color 0.2s'
+            }}
+          >
+            {isLoading ? 'Creating Account...' : 'Sign Up'}
+          </button>
           {success && <div style={{color:'#059669', fontSize: 14, marginTop: 16, textAlign: 'center'}}>{success}</div>}
         </form>
       </div>
@@ -307,6 +322,7 @@ function Login({ onLogin, noLayout }) {
   });
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   function validateEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -318,8 +334,10 @@ function Login({ onLogin, noLayout }) {
     setSuccess('');
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
+    setIsLoading(true);
+    
     let newErrors = {};
     if (!validateEmail(form.email)) {
       newErrors.email = 'Invalid email address';
@@ -327,19 +345,32 @@ function Login({ onLogin, noLayout }) {
     if (!form.password) {
       newErrors.password = 'Password is required';
     }
+    
     setErrors(newErrors);
+    
     if (Object.keys(newErrors).length === 0) {
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
-      const user = users.find(u => u.email === form.email);
-      if (!user) {
-        setErrors({ email: 'No account found with this email' });
-      } else if (user.password !== form.password) {
-        setErrors({ password: 'Incorrect password' });
-      } else {
-        setSuccess('Login successful!');
-        onLogin && onLogin(user);
+      try {
+        const result = await authService.login(form.email, form.password);
+        
+        if (result.success) {
+          setSuccess('Login successful!');
+          onLogin && onLogin(result.user);
+        } else {
+          // Determine which field to show the error on
+          if (result.error.includes('No account found')) {
+            setErrors({ email: result.error });
+          } else if (result.error.includes('Incorrect password')) {
+            setErrors({ password: result.error });
+          } else {
+            setErrors({ email: result.error });
+          }
+        }
+      } catch (error) {
+        setErrors({ email: 'Login failed. Please try again.' });
       }
     }
+    
+    setIsLoading(false);
   }
 
   return noLayout ? (
@@ -403,18 +434,24 @@ function Login({ onLogin, noLayout }) {
             />
             {errors.password && <div style={{color:'#dc2626', fontSize: 12, marginTop: 4}}>{errors.password}</div>}
           </div>
-          <button type="submit" style={{ 
-            width: '100%',
-            background: '#e5e7eb', 
-            color: '#222', 
-            border: 'none', 
-            borderRadius: 8, 
-            padding: '14px 24px', 
-            fontWeight: 600, 
-            fontSize: 16, 
-            cursor: 'pointer',
-            transition: 'background-color 0.2s'
-          }}>Login</button>
+          <button 
+            type="submit" 
+            disabled={isLoading}
+            style={{ 
+              width: '100%',
+              background: isLoading ? '#9ca3af' : '#e5e7eb', 
+              color: '#222', 
+              border: 'none', 
+              borderRadius: 8, 
+              padding: '14px 24px', 
+              fontWeight: 600, 
+              fontSize: 16, 
+              cursor: isLoading ? 'not-allowed' : 'pointer',
+              transition: 'background-color 0.2s'
+            }}
+          >
+            {isLoading ? 'Logging In...' : 'Login'}
+          </button>
           {success && <div style={{color:'#059669', fontSize: 14, marginTop: 16, textAlign: 'center'}}>{success}</div>}
         </form>
       </div>
@@ -443,13 +480,198 @@ function Login({ onLogin, noLayout }) {
 }
 
 function Settings({ user, onLogout }) {
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [passwordErrors, setPasswordErrors] = useState({});
+  const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
   if (!user) return <Navigate to="/" replace />;
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setPasswordErrors({});
+    setPasswordSuccess('');
+
+    // Validation
+    let errors = {};
+    if (!passwordForm.currentPassword) {
+      errors.currentPassword = 'Current password is required';
+    }
+    if (!passwordForm.newPassword) {
+      errors.newPassword = 'New password is required';
+    } else if (!/^(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/.test(passwordForm.newPassword)) {
+      errors.newPassword = 'Password must be at least 8 characters, include 1 number and 1 capital letter';
+    }
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      errors.confirmPassword = 'Passwords do not match';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setPasswordErrors(errors);
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const result = await authService.changePassword(user.id, passwordForm.currentPassword, passwordForm.newPassword);
+      
+      if (result.success) {
+        setPasswordSuccess('Password updated successfully!');
+        setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        setShowPasswordForm(false);
+      } else {
+        setPasswordErrors({ currentPassword: result.error });
+      }
+    } catch (error) {
+      setPasswordErrors({ currentPassword: 'Failed to update password. Please try again.' });
+    }
+
+    setIsLoading(false);
+  };
+
   return (
     <Layout user={user} onLogout={onLogout}>
-      <div style={{ background: '#fff', borderRadius: 16, padding: 24, maxWidth: 400, margin: '0 auto', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-        <h2 style={{ fontWeight: 700, marginBottom: 16 }}>Settings</h2>
-        <div><strong>Email:</strong> {user.email}</div>
-        <div><strong>Day of Birth:</strong> {user.dob}</div>
+      <div style={{ background: '#fff', borderRadius: 16, padding: 24, maxWidth: 600, margin: '0 auto', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+        <h2 style={{ fontWeight: 700, marginBottom: 24 }}>Account Settings</h2>
+        
+        <div style={{ marginBottom: 32 }}>
+          <h3 style={{ fontWeight: 600, marginBottom: 16, color: '#374151' }}>Profile Information</h3>
+          <div style={{ display: 'grid', gap: '12px' }}>
+            <div><strong>Email:</strong> {user.email}</div>
+            <div><strong>Role:</strong> {user.role || 'User'}</div>
+            <div><strong>Account Created:</strong> {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}</div>
+            <div><strong>Last Login:</strong> {user.last_login ? new Date(user.last_login).toLocaleString() : 'N/A'}</div>
+          </div>
+        </div>
+
+        <div style={{ marginBottom: 32 }}>
+          <h3 style={{ fontWeight: 600, marginBottom: 16, color: '#374151' }}>Security</h3>
+          {!showPasswordForm ? (
+            <button
+              onClick={() => setShowPasswordForm(true)}
+              style={{
+                background: '#222',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 8,
+                padding: '12px 24px',
+                fontWeight: 500,
+                cursor: 'pointer'
+              }}
+            >
+              Change Password
+            </button>
+          ) : (
+            <form onSubmit={handlePasswordChange} style={{ background: '#f9fafb', padding: 20, borderRadius: 8 }}>
+              <h4 style={{ marginBottom: 16, fontWeight: 600 }}>Change Password</h4>
+              
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>Current Password:</label>
+                <input
+                  type="password"
+                  value={passwordForm.currentPassword}
+                  onChange={(e) => setPasswordForm({...passwordForm, currentPassword: e.target.value})}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: 4,
+                    fontSize: 14
+                  }}
+                />
+                {passwordErrors.currentPassword && (
+                  <div style={{ color: '#dc2626', fontSize: 12, marginTop: 4 }}>{passwordErrors.currentPassword}</div>
+                )}
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>New Password:</label>
+                <input
+                  type="password"
+                  value={passwordForm.newPassword}
+                  onChange={(e) => setPasswordForm({...passwordForm, newPassword: e.target.value})}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: 4,
+                    fontSize: 14
+                  }}
+                />
+                {passwordErrors.newPassword && (
+                  <div style={{ color: '#dc2626', fontSize: 12, marginTop: 4 }}>{passwordErrors.newPassword}</div>
+                )}
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>Confirm New Password:</label>
+                <input
+                  type="password"
+                  value={passwordForm.confirmPassword}
+                  onChange={(e) => setPasswordForm({...passwordForm, confirmPassword: e.target.value})}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: 4,
+                    fontSize: 14
+                  }}
+                />
+                {passwordErrors.confirmPassword && (
+                  <div style={{ color: '#dc2626', fontSize: 12, marginTop: 4 }}>{passwordErrors.confirmPassword}</div>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  style={{
+                    background: isLoading ? '#9ca3af' : '#222',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 6,
+                    padding: '8px 16px',
+                    fontWeight: 500,
+                    cursor: isLoading ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {isLoading ? 'Updating...' : 'Update Password'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPasswordForm(false);
+                    setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                    setPasswordErrors({});
+                    setPasswordSuccess('');
+                  }}
+                  style={{
+                    background: '#e5e7eb',
+                    color: '#222',
+                    border: 'none',
+                    borderRadius: 6,
+                    padding: '8px 16px',
+                    fontWeight: 500,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+
+              {passwordSuccess && (
+                <div style={{ color: '#059669', fontSize: 14, marginTop: 12 }}>{passwordSuccess}</div>
+              )}
+            </form>
+          )}
+        </div>
       </div>
     </Layout>
   );
@@ -457,7 +679,8 @@ function Settings({ user, onLogout }) {
 
 function App() {
   const [loggedInUser, setLoggedInUser] = useState(() => {
-    return JSON.parse(localStorage.getItem('loggedInUser') || 'null');
+    const savedUser = localStorage.getItem('loggedInUser');
+    return savedUser ? JSON.parse(savedUser) : null;
   });
   const navigate = window.ReactRouterDOM ? window.ReactRouterDOM.useNavigate() : null;
 
