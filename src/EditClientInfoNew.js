@@ -29,6 +29,16 @@ export default function EditClientInfoNew() {
   const navigate = useNavigate();
   const { isMobile, sidebarOpen, setSidebarOpen, toggleSidebar, getMainContentStyle } = useResponsiveLayout();
   
+  // Mobile-optimized input styles
+  const getInputStyle = (hasError = false) => ({
+    width: '100%',
+    padding: isMobile ? '14px 12px' : '12px 16px',
+    border: hasError ? '1px solid #dc2626' : '1px solid #d1d5db',
+    borderRadius: 8,
+    fontSize: isMobile ? 16 : 14,
+    boxSizing: 'border-box'
+  });
+  
   // Form state for manually input fields only
   const [formData, setFormData] = useState({
     // Basic Profile Information (Manual Input)
@@ -331,7 +341,10 @@ export default function EditClientInfoNew() {
         onClose={() => setSidebarOpen(false)}
       />
       
-      <main style={getMainContentStyle()}>
+      <main style={{
+        ...getMainContentStyle(),
+        paddingBottom: isMobile ? '100px' : '32px' // Extra padding for mobile to prevent cutoff
+      }}>
         <ClientHeader
           clientName={formData.name}
           clientStatus={formData.status}
@@ -346,8 +359,10 @@ export default function EditClientInfoNew() {
         <div style={{
           display: "flex",
           justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 32
+          alignItems: isMobile ? "flex-start" : "center",
+          marginBottom: isMobile ? 24 : 32,
+          flexDirection: isMobile ? "column" : "row",
+          gap: isMobile ? 16 : 0
         }}>
           <div>
             <button
@@ -366,8 +381,16 @@ export default function EditClientInfoNew() {
             >
               <FaArrowLeft /> Back to Dashboard
             </button>
-            <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0 }}>Edit Client Information</h1>
-            <p style={{ color: '#6b7280', margin: '8px 0 0 0' }}>
+            <h1 style={{ 
+              fontSize: isMobile ? 24 : 28, 
+              fontWeight: 700, 
+              margin: 0 
+            }}>Edit Client Information</h1>
+            <p style={{ 
+              color: '#6b7280', 
+              margin: '8px 0 0 0',
+              fontSize: isMobile ? 14 : 16
+            }}>
               Update manually input client data. Calculated fields are automatically updated.
             </p>
           </div>
@@ -380,13 +403,15 @@ export default function EditClientInfoNew() {
               color: '#fff',
               border: 'none',
               borderRadius: 8,
-              padding: '12px 24px',
+              padding: isMobile ? '14px 20px' : '12px 24px',
               fontWeight: 600,
               cursor: isSaving ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: 8,
-              opacity: isSaving ? 0.6 : 1
+              opacity: isSaving ? 0.6 : 1,
+              fontSize: isMobile ? 16 : 14,
+              minHeight: isMobile ? '48px' : 'auto'
             }}
           >
             <FaSave />
@@ -408,20 +433,37 @@ export default function EditClientInfoNew() {
         )}
 
         {/* Form Sections */}
-        <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+        <div style={{ 
+          display: 'flex', 
+          gap: isMobile ? 16 : 24, 
+          flexWrap: 'wrap',
+          flexDirection: isMobile ? 'column' : 'row'
+        }}>
           
           {/* Basic Profile Information */}
-          <div style={{ flex: 1, minWidth: 400 }}>
+          <div style={{ 
+            flex: 1, 
+            minWidth: isMobile ? '100%' : 400,
+            width: isMobile ? '100%' : 'auto'
+          }}>
             <div style={{
               background: '#fff',
               borderRadius: 16,
-              padding: 24,
+              padding: isMobile ? 16 : 24,
               boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
-              marginBottom: 24
+              marginBottom: isMobile ? 16 : 24
             }}>
-              <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 24 }}>Basic Profile Information</h2>
+              <h2 style={{ 
+                fontSize: isMobile ? 18 : 20, 
+                fontWeight: 600, 
+                marginBottom: isMobile ? 16 : 24 
+              }}>Basic Profile Information</h2>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', 
+                gap: isMobile ? 12 : 16 
+              }}>
                 <div>
                   <label style={{ display: 'block', marginBottom: 8, fontWeight: 500, color: '#374151' }}>
                     NRIC *
@@ -431,14 +473,7 @@ export default function EditClientInfoNew() {
                     name="nric"
                     value={formData.nric}
                     onChange={handleChange}
-                    style={{
-                      width: '100%',
-                      padding: '12px 16px',
-                      border: errors.nric ? '1px solid #dc2626' : '1px solid #d1d5db',
-                      borderRadius: 8,
-                      fontSize: 14,
-                      boxSizing: 'border-box'
-                    }}
+                    style={getInputStyle(!!errors.nric)}
                     placeholder="000000-00-0000"
                   />
                   {errors.nric && <div style={{ color: '#dc2626', fontSize: 12, marginTop: 4 }}>{errors.nric}</div>}
@@ -1084,10 +1119,18 @@ export default function EditClientInfoNew() {
           }}>
             <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 24 }}>Transaction Behavioral Data</h2>
             
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(300px, 1fr))', 
+              gap: isMobile ? 16 : 24 
+            }}>
               <div>
                 <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16, color: '#374151' }}>Fund Transfers</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', 
+                  gap: isMobile ? 8 : 12 
+                }}>
                   <div>
                     <label style={{ display: 'block', marginBottom: 8, fontWeight: 500, color: '#6b7280', fontSize: 14 }}>
                       Volume (RM)
@@ -1136,7 +1179,11 @@ export default function EditClientInfoNew() {
 
               <div>
                 <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16, color: '#374151' }}>POS Purchases</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', 
+                  gap: isMobile ? 8 : 12 
+                }}>
                   <div>
                     <label style={{ display: 'block', marginBottom: 8, fontWeight: 500, color: '#6b7280', fontSize: 14 }}>
                       Volume (RM)
@@ -1185,7 +1232,11 @@ export default function EditClientInfoNew() {
 
               <div>
                 <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16, color: '#374151' }}>ATM Withdrawals</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', 
+                  gap: isMobile ? 8 : 12 
+                }}>
                   <div>
                     <label style={{ display: 'block', marginBottom: 8, fontWeight: 500, color: '#6b7280', fontSize: 14 }}>
                       Volume (RM)
@@ -1234,7 +1285,11 @@ export default function EditClientInfoNew() {
 
               <div>
                 <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16, color: '#374151' }}>FX Transactions</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', 
+                  gap: isMobile ? 8 : 12 
+                }}>
                   <div>
                     <label style={{ display: 'block', marginBottom: 8, fontWeight: 500, color: '#6b7280', fontSize: 14 }}>
                       Volume (RM)
