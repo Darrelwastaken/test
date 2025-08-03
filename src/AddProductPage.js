@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import Sidebar from './Sidebar';
+import ClientHeader from './components/ClientHeader';
 import { supabase } from './supabaseClient';
 
 export default function AddProductPage() {
   const { nric } = useParams();
   const navigate = useNavigate();
+  const { isMobile, sidebarOpen, setSidebarOpen, toggleSidebar, getMainContentStyle } = useResponsiveLayout();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
@@ -80,8 +83,22 @@ export default function AddProductPage() {
 
   return (
     <div style={{ background: '#f6f7f9', minHeight: '100vh' }}>
-      <Sidebar clientId={nric} />
-      <main style={{ marginLeft: 240, padding: 32 }}>
+      <Sidebar 
+        clientId={nric} 
+        isMobile={isMobile}
+        isOpen={sidebarOpen}
+        onToggle={toggleSidebar}
+        onClose={() => setSidebarOpen(false)}
+      />
+      <main style={getMainContentStyle()}>
+        <ClientHeader
+          clientName="Products Management"
+          nric={nric}
+          isMobile={isMobile}
+          showEditButton={false}
+          showCrmButton={false}
+        />
+        
         {/* Header */}
         <div style={{
           display: "flex",

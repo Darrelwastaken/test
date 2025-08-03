@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
 import { deleteClientCompletely } from './utils/clientDeletion';
 import { deleteAIInsights } from './utils/aiInsightsStorage';
+import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 
 
 
@@ -25,6 +26,7 @@ function formatNRICInput(value) {
 
 export default function ClientSelection({ user, onLogout }) {
   const navigate = useNavigate();
+  const { isMobile, getResponsiveButtonStyle, getResponsiveInputStyle } = useResponsiveLayout();
   const [clients, setClients] = useState([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newClient, setNewClient] = useState({
@@ -351,37 +353,37 @@ export default function ClientSelection({ user, onLogout }) {
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        padding: "32px",
+        padding: isMobile ? "16px" : "32px",
         background: "#fff",
-        borderBottom: "1px solid #e5e7eb"
+        borderBottom: "1px solid #e5e7eb",
+        flexDirection: isMobile ? "column" : "row",
+        gap: isMobile ? "16px" : "0"
       }}>
-        <div>
-          <span style={{ fontSize: 28, fontWeight: 700 }}>Select Client</span>
-          <div style={{ marginTop: 8, color: "#555" }}>
+        <div style={{ textAlign: isMobile ? "center" : "left" }}>
+          <span style={{ fontSize: isMobile ? 24 : 28, fontWeight: 700 }}>Select Client</span>
+          <div style={{ marginTop: 8, color: "#555", fontSize: isMobile ? 14 : 16 }}>
             Choose a client to view their 360° overview
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 8 : 16, flexDirection: isMobile ? "column" : "row" }}>
           <button
-            style={{
-              background: '#222',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 6,
-              padding: '8px 16px',
-              fontWeight: 500,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8
-            }}
+            style={getResponsiveButtonStyle('primary')}
             onClick={() => setShowAddForm(true)}
           >
-            <FaPlus size={14} />
+            <FaPlus size={isMobile ? 16 : 14} />
             Add Client
           </button>
           <button
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 28, color: '#222' }}
+            style={{ 
+              background: 'none', 
+              border: 'none', 
+              cursor: 'pointer', 
+              fontSize: isMobile ? 24 : 28, 
+              color: '#222',
+              padding: isMobile ? '8px' : '4px',
+              minHeight: isMobile ? '44px' : 'auto',
+              minWidth: isMobile ? '44px' : 'auto'
+            }}
             title="Settings"
             onClick={() => navigate('/settings')}
           >
@@ -405,28 +407,25 @@ export default function ClientSelection({ user, onLogout }) {
       )}
 
       {/* Search Bar */}
-      <div style={{ background: '#fff', padding: '24px 32px 0 32px', borderBottom: '1px solid #e5e7eb' }}>
+      <div style={{ background: '#fff', padding: isMobile ? '16px' : '24px 32px 0 32px', borderBottom: '1px solid #e5e7eb' }}>
         {isLoading && (
           <div style={{ textAlign: 'center', padding: '20px 0' }}>
             Loading clients...
           </div>
         )}
         <div style={{ display: 'flex', alignItems: 'center', background: '#f6f8fc', borderRadius: 8, border: '1px solid #e5e7eb', padding: '0 12px', marginBottom: 16 }}>
-          <FaSearch style={{ color: '#374151', fontSize: 18, marginRight: 8 }} />
+          <FaSearch style={{ color: '#374151', fontSize: isMobile ? 16 : 18, marginRight: 8 }} />
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search clients by NRIC or name..."
             style={{
-              width: '100%',
-              padding: '12px 0',
+              ...getResponsiveInputStyle(),
+              background: 'transparent',
               border: 'none',
               outline: 'none',
-              background: 'transparent',
-              fontSize: 16,
-              fontFamily: 'inherit',
-              boxSizing: 'border-box'
+              padding: '12px 0'
             }}
           />
         </div>

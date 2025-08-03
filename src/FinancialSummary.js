@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaCog, FaArrowUp, FaArrowDown, FaExclamationTriangle, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
+import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import Sidebar from './Sidebar';
+import ClientHeader from './components/ClientHeader';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, ArcElement, DoughnutController, Filler } from 'chart.js';
 import { formatMYR } from './utils';
@@ -13,6 +15,16 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarEleme
 export default function FinancialSummary() {
   const { nric } = useParams();
   const navigate = useNavigate();
+  const { 
+    isMobile, 
+    sidebarOpen, 
+    setSidebarOpen, 
+    toggleSidebar, 
+    getMainContentStyle,
+    getResponsiveGridStyle,
+    getResponsiveCardStyle,
+    getResponsiveChartStyle
+  } = useResponsiveLayout();
   
   // Use the custom hooks to get all metrics
   const {
@@ -45,8 +57,14 @@ export default function FinancialSummary() {
   if (isLoading) {
     return (
       <div style={{ background: '#f6f7f9', minHeight: '100vh' }}>
-        <Sidebar clientId={nric} />
-        <div style={{ padding: 32, marginLeft: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)' }}>
+        <Sidebar 
+          clientId={nric} 
+          isMobile={isMobile}
+          isOpen={sidebarOpen}
+          onToggle={toggleSidebar}
+          onClose={() => setSidebarOpen(false)}
+        />
+        <div style={{ ...getMainContentStyle(), display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)' }}>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: 24, fontWeight: 600, marginBottom: 16, color: '#374151' }}>Loading Financial Summary...</div>
             <div style={{ color: '#6b7280' }}>Fetching client financial data</div>
@@ -59,8 +77,14 @@ export default function FinancialSummary() {
   if (error) {
     return (
       <div style={{ background: '#f6f7f9', minHeight: '100vh' }}>
-        <Sidebar clientId={nric} />
-        <div style={{ padding: 32, marginLeft: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)' }}>
+        <Sidebar 
+          clientId={nric} 
+          isMobile={isMobile}
+          isOpen={sidebarOpen}
+          onToggle={toggleSidebar}
+          onClose={() => setSidebarOpen(false)}
+        />
+        <div style={{ ...getMainContentStyle(), display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)' }}>
           <div style={{ textAlign: 'center', background: '#fff', padding: 32, borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
             <div style={{ fontSize: 24, fontWeight: 600, marginBottom: 16, color: '#ef4444' }}>Error Loading Financial Summary</div>
             <div style={{ color: '#6b7280', marginBottom: 24 }}>{error}</div>
@@ -79,8 +103,14 @@ export default function FinancialSummary() {
   if (!client || !financialData) {
     return (
       <div style={{ background: '#f6f7f9', minHeight: '100vh' }}>
-        <Sidebar clientId={nric} />
-        <div style={{ padding: 32, marginLeft: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)' }}>
+        <Sidebar 
+          clientId={nric} 
+          isMobile={isMobile}
+          isOpen={sidebarOpen}
+          onToggle={toggleSidebar}
+          onClose={() => setSidebarOpen(false)}
+        />
+        <div style={{ ...getMainContentStyle(), display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)' }}>
           <div style={{ textAlign: 'center', background: '#fff', padding: 32, borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
             <div style={{ fontSize: 24, fontWeight: 600, marginBottom: 16, color: '#ef4444' }}>
               {!client ? 'Client Not Found' : 'Financial Data Not Available'}
@@ -120,55 +150,21 @@ export default function FinancialSummary() {
 
   return (
     <div style={{ background: '#f6f7f9', minHeight: '100vh' }}>
-      <Sidebar clientId={nric} />
-      <div style={{ padding: '20px 16px', marginLeft: 240, width: 'calc(100% - 240px)', boxSizing: 'border-box', overflowX: 'hidden' }}>
-        {/* Header */}
-        <div style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 20
-        }}>
-          <div>
-            <span style={{ fontSize: 24, fontWeight: 700 }}>{clientName || 'Client Not Found'}</span>
-            {clientStatus && (
-              <span style={{
-                marginLeft: 12,
-                background: clientStatus === 'Dormant' ? '#fde68a' : clientStatus === 'High Risk' ? '#fecaca' : '#e5e7eb',
-                color: clientStatus === 'Dormant' ? '#b45309' : clientStatus === 'High Risk' ? '#b91c1c' : '#222',
-                borderRadius: 6,
-                padding: '3px 8px',
-                fontWeight: 500,
-                fontSize: 14
-              }}>{clientStatus}</span>
-            )}
-            <div style={{ marginTop: 6, color: "#555", fontSize: 14 }}>
-              {clientRiskProfile ? (<>
-                Risk Profile <b>{clientRiskProfile}</b> &nbsp;|&nbsp; Priority
-              </>) : null}
-            </div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <button style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 6, padding: "6px 12px", fontWeight: 500, cursor: "pointer", fontSize: 14 }} onClick={() => navigate(`/edit-client-info/${nric}`)}>Edit Client Info</button>
-            <button style={{
-              background: "#222",
-              color: "#fff",
-              border: "none",
-              borderRadius: 6,
-              padding: "6px 12px",
-              fontWeight: 500,
-              cursor: "pointer",
-              fontSize: 14
-            }}>View CRM Notes</button>
-            <button
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 24, color: '#222' }}
-              title="Settings"
-              onClick={() => navigate('/settings')}
-            >
-              <FaCog />
-            </button>
-          </div>
-        </div>
+      <Sidebar 
+        clientId={nric} 
+        isMobile={isMobile}
+        isOpen={sidebarOpen}
+        onToggle={toggleSidebar}
+        onClose={() => setSidebarOpen(false)}
+      />
+      <div style={{ ...getMainContentStyle(), boxSizing: 'border-box', overflowX: 'hidden', width: '100%' }}>
+        <ClientHeader
+          clientName={clientName}
+          clientStatus={clientStatus}
+          clientRiskProfile={clientRiskProfile}
+          nric={nric}
+          isMobile={isMobile}
+        />
 
         <h2 style={{ fontWeight: 700, fontSize: 32, marginBottom: 20 }}>Financial Summary</h2>
 

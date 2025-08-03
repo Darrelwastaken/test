@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import Sidebar from './Sidebar';
+import ClientHeader from './components/ClientHeader';
 import { supabase } from './supabaseClient';
 
 export default function EditProductsPage() {
   const { nric } = useParams();
   const navigate = useNavigate();
+  const { isMobile, sidebarOpen, setSidebarOpen, toggleSidebar, getMainContentStyle } = useResponsiveLayout();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -168,8 +171,14 @@ export default function EditProductsPage() {
   if (loading) {
     return (
       <div style={{ background: '#f6f7f9', minHeight: '100vh' }}>
-        <Sidebar clientId={nric} />
-        <main style={{ marginLeft: 240, padding: 32 }}>
+        <Sidebar 
+          clientId={nric} 
+          isMobile={isMobile}
+          isOpen={sidebarOpen}
+          onToggle={toggleSidebar}
+          onClose={() => setSidebarOpen(false)}
+        />
+        <main style={getMainContentStyle()}>
           <div style={{ textAlign: 'center', padding: '48px' }}>
             <div style={{ fontSize: '18px', color: '#666' }}>Loading products...</div>
           </div>
@@ -181,8 +190,14 @@ export default function EditProductsPage() {
   if (error) {
     return (
       <div style={{ background: '#f6f7f9', minHeight: '100vh' }}>
-        <Sidebar clientId={nric} />
-        <main style={{ marginLeft: 240, padding: 32 }}>
+        <Sidebar 
+          clientId={nric} 
+          isMobile={isMobile}
+          isOpen={sidebarOpen}
+          onToggle={toggleSidebar}
+          onClose={() => setSidebarOpen(false)}
+        />
+        <main style={getMainContentStyle()}>
           <div style={{ textAlign: 'center', padding: '48px' }}>
             <div style={{ fontSize: '18px', color: '#dc2626', marginBottom: '8px' }}>
               Unable to load products
@@ -219,8 +234,22 @@ export default function EditProductsPage() {
 
   return (
     <div style={{ background: '#f6f7f9', minHeight: '100vh' }}>
-      <Sidebar clientId={nric} />
-      <main style={{ marginLeft: 240, padding: 32 }}>
+      <Sidebar 
+        clientId={nric} 
+        isMobile={isMobile}
+        isOpen={sidebarOpen}
+        onToggle={toggleSidebar}
+        onClose={() => setSidebarOpen(false)}
+      />
+      <main style={getMainContentStyle()}>
+        <ClientHeader
+          clientName="Products Management"
+          nric={nric}
+          isMobile={isMobile}
+          showEditButton={false}
+          showCrmButton={false}
+        />
+        
         {/* Header */}
         <div style={{
           display: "flex",

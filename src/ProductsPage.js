@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaCog } from 'react-icons/fa';
+import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import Sidebar from './Sidebar';
+import ClientHeader from './components/ClientHeader';
 import { useClientMetrics } from './hooks/useClientMetrics';
 import { supabase } from './supabaseClient';
 
 export default function ProductsPage() {
   const { nric } = useParams();
   const navigate = useNavigate();
+  const { isMobile, sidebarOpen, setSidebarOpen, toggleSidebar, getMainContentStyle } = useResponsiveLayout();
   const { client, clientName, clientStatus, clientRiskProfile } = useClientMetrics(nric);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -70,8 +73,14 @@ export default function ProductsPage() {
   if (loading) {
     return (
       <div style={{ background: '#f6f7f9', minHeight: '100vh' }}>
-        <Sidebar clientId={nric} />
-        <main style={{ marginLeft: 240, padding: 32 }}>
+        <Sidebar 
+          clientId={nric} 
+          isMobile={isMobile}
+          isOpen={sidebarOpen}
+          onToggle={toggleSidebar}
+          onClose={() => setSidebarOpen(false)}
+        />
+        <main style={getMainContentStyle()}>
           <div style={{ textAlign: 'center', padding: '48px' }}>
             <div style={{ fontSize: '18px', color: '#666' }}>Loading products...</div>
           </div>
@@ -83,8 +92,14 @@ export default function ProductsPage() {
   if (error) {
     return (
       <div style={{ background: '#f6f7f9', minHeight: '100vh' }}>
-        <Sidebar clientId={nric} />
-        <main style={{ marginLeft: 240, padding: 32 }}>
+        <Sidebar 
+          clientId={nric} 
+          isMobile={isMobile}
+          isOpen={sidebarOpen}
+          onToggle={toggleSidebar}
+          onClose={() => setSidebarOpen(false)}
+        />
+        <main style={getMainContentStyle()}>
           <div style={{ textAlign: 'center', padding: '48px' }}>
             <div style={{ fontSize: '18px', color: '#dc2626', marginBottom: '8px' }}>
               Unable to load products
@@ -100,9 +115,23 @@ export default function ProductsPage() {
 
   return (
     <div style={{ background: '#f6f7f9', minHeight: '100vh' }}>
-      <Sidebar clientId={nric} />
-      <main style={{ marginLeft: 240, padding: 32 }}>
-        {/* Header */}
+      <Sidebar 
+        clientId={nric} 
+        isMobile={isMobile}
+        isOpen={sidebarOpen}
+        onToggle={toggleSidebar}
+        onClose={() => setSidebarOpen(false)}
+      />
+      <main style={getMainContentStyle()}>
+        <ClientHeader
+          clientName={clientName}
+          clientStatus={clientStatus}
+          clientRiskProfile={clientRiskProfile}
+          nric={nric}
+          isMobile={isMobile}
+        />
+        
+        {/* Navigation */}
         <div style={{
           display: "flex",
           justifyContent: "space-between",

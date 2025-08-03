@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaLock } from 'react-icons/fa';
+import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import Sidebar from './Sidebar';
 import { supabase } from './supabaseClient';
 import { useClientMetrics } from './hooks/useClientMetrics';
@@ -28,6 +29,7 @@ function formatNRICInput(value) {
 export default function EditClientInfo() {
   const { nric: paramNric } = useParams();
   const navigate = useNavigate();
+  const { isMobile, sidebarOpen, setSidebarOpen, toggleSidebar, getMainContentStyle } = useResponsiveLayout();
   
   // Use the custom hook to get all metrics
   const {
@@ -604,8 +606,14 @@ export default function EditClientInfo() {
   if (isLoading || financialSummaryLoading) {
     return (
       <div style={{ background: '#f6f7f9', minHeight: '100vh' }}>
-        <Sidebar clientId={paramNric} />
-        <div style={{ padding: 32, marginLeft: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)' }}>
+        <Sidebar 
+          clientId={paramNric} 
+          isMobile={isMobile}
+          isOpen={sidebarOpen}
+          onToggle={toggleSidebar}
+          onClose={() => setSidebarOpen(false)}
+        />
+        <div style={{ ...getMainContentStyle(), display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)' }}>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: 24, fontWeight: 600, marginBottom: 16, color: '#374151' }}>Loading Client Information...</div>
             <div style={{ color: '#6b7280' }}>Fetching client details for editing</div>
@@ -618,8 +626,14 @@ export default function EditClientInfo() {
   if (error) {
     return (
       <div style={{ background: '#f6f7f9', minHeight: '100vh' }}>
-        <Sidebar clientId={paramNric} />
-        <div style={{ padding: 32, marginLeft: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)' }}>
+        <Sidebar 
+          clientId={paramNric} 
+          isMobile={isMobile}
+          isOpen={sidebarOpen}
+          onToggle={toggleSidebar}
+          onClose={() => setSidebarOpen(false)}
+        />
+        <div style={{ ...getMainContentStyle(), display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)' }}>
           <div style={{ textAlign: 'center', background: '#fff', padding: 32, borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
             <div style={{ fontSize: 24, fontWeight: 600, marginBottom: 16, color: '#ef4444' }}>Error Loading Client Information</div>
             <div style={{ color: '#6b7280', marginBottom: 24 }}>{error}</div>
@@ -638,8 +652,14 @@ export default function EditClientInfo() {
   if (!client) {
     return (
       <div style={{ background: '#f6f7f9', minHeight: '100vh' }}>
-        <Sidebar clientId={paramNric} />
-        <div style={{ padding: 32, marginLeft: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)' }}>
+        <Sidebar 
+          clientId={paramNric} 
+          isMobile={isMobile}
+          isOpen={sidebarOpen}
+          onToggle={toggleSidebar}
+          onClose={() => setSidebarOpen(false)}
+        />
+        <div style={{ ...getMainContentStyle(), display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)' }}>
           <div style={{ textAlign: 'center', background: '#fff', padding: 32, borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
             <div style={{ fontSize: 24, fontWeight: 600, marginBottom: 16, color: '#ef4444' }}>Client Not Found</div>
             <div style={{ color: '#6b7280', marginBottom: 24 }}>The client with NRIC {paramNric} could not be found.</div>
@@ -657,8 +677,24 @@ export default function EditClientInfo() {
 
   return (
     <div style={{ background: '#f6f7f9', minHeight: '100vh' }}>
-      <Sidebar clientId={formData.nric} />
-      <div style={{ padding: 32, marginLeft: 240, maxWidth: 1200 }}>
+      <Sidebar 
+        clientId={formData.nric} 
+        isMobile={isMobile}
+        isOpen={sidebarOpen}
+        onToggle={toggleSidebar}
+        onClose={() => setSidebarOpen(false)}
+      />
+      <div style={{ ...getMainContentStyle(), maxWidth: 1200 }}>
+        <ClientHeader
+          clientName={clientName}
+          clientStatus={clientStatus}
+          clientRiskProfile={clientRiskProfile}
+          nric={nric}
+          isMobile={isMobile}
+          showEditButton={false}
+          showCrmButton={false}
+        />
+        
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
           <div style={{ fontSize: 28, fontWeight: 700 }}>Edit Client Info</div>
           <button

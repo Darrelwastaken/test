@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaCog } from 'react-icons/fa';
+import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import Sidebar from './Sidebar';
+import ClientHeader from './components/ClientHeader';
 import { supabase } from './supabaseClient';
 
 export default function TransactionBehavior() {
   const { nric } = useParams();
   const navigate = useNavigate();
+  const { isMobile, sidebarOpen, setSidebarOpen, toggleSidebar, getMainContentStyle } = useResponsiveLayout();
   const [client, setClient] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -78,8 +81,14 @@ export default function TransactionBehavior() {
   if (isLoading) {
     return (
       <div style={{ background: '#f6f7f9', minHeight: '100vh' }}>
-        <Sidebar clientId={nric} />
-        <div style={{ padding: 32, marginLeft: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)' }}>
+        <Sidebar 
+          clientId={nric} 
+          isMobile={isMobile}
+          isOpen={sidebarOpen}
+          onToggle={toggleSidebar}
+          onClose={() => setSidebarOpen(false)}
+        />
+        <div style={{ ...getMainContentStyle(), display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)' }}>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: 24, fontWeight: 600, marginBottom: 16, color: '#374151' }}>Loading Transaction Behavior...</div>
             <div style={{ color: '#6b7280' }}>Analyzing client transaction patterns and behavior</div>
@@ -92,8 +101,14 @@ export default function TransactionBehavior() {
   if (error) {
     return (
       <div style={{ background: '#f6f7f9', minHeight: '100vh' }}>
-        <Sidebar clientId={nric} />
-        <div style={{ padding: 32, marginLeft: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)' }}>
+        <Sidebar 
+          clientId={nric} 
+          isMobile={isMobile}
+          isOpen={sidebarOpen}
+          onToggle={toggleSidebar}
+          onClose={() => setSidebarOpen(false)}
+        />
+        <div style={{ ...getMainContentStyle(), display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)' }}>
           <div style={{ textAlign: 'center', background: '#fff', padding: 32, borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
             <div style={{ fontSize: 24, fontWeight: 600, marginBottom: 16, color: '#ef4444' }}>Error Loading Transaction Behavior</div>
             <div style={{ color: '#6b7280', marginBottom: 24 }}>{error}</div>
@@ -135,54 +150,21 @@ export default function TransactionBehavior() {
 
   return (
     <div style={{ background: '#f6f7f9', minHeight: '100vh' }}>
-      <Sidebar clientId={nric} />
-      <div style={{ padding: 32, marginLeft: 240 }}>
-        {/* Header */}
-        <div style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 32
-        }}>
-          <div>
-            <span style={{ fontSize: 28, fontWeight: 700 }}>{client.name || 'Client Not Found'}</span>
-            {client.status && (
-              <span style={{
-                marginLeft: 16,
-                background: client.status === 'Dormant' ? '#fde68a' : client.status === 'High Risk' ? '#fecaca' : '#e5e7eb',
-                color: client.status === 'Dormant' ? '#b45309' : client.status === 'High Risk' ? '#b91c1c' : '#222',
-                borderRadius: 8,
-                padding: '4px 12px',
-                fontWeight: 500,
-                fontSize: 16
-              }}>{client.status}</span>
-            )}
-            <div style={{ marginTop: 8, color: "#555" }}>
-              {client.risk_profile ? (<>
-                Risk Profile <b>{client.risk_profile}</b> &nbsp;|&nbsp; Priority
-              </>) : null}
-            </div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <button style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8, padding: "8px 16px", fontWeight: 500, cursor: "pointer" }} onClick={() => navigate(`/edit-client-info/${nric}`)}>Edit Client Info</button>
-            <button style={{
-              background: "#222",
-              color: "#fff",
-              border: "none",
-              borderRadius: 8,
-              padding: "8px 16px",
-              fontWeight: 500,
-              cursor: "pointer"
-            }}>View CRM Notes</button>
-            <button
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 28, color: '#222' }}
-              title="Settings"
-              onClick={() => navigate('/settings')}
-            >
-              <FaCog />
-            </button>
-          </div>
-        </div>
+      <Sidebar 
+        clientId={nric} 
+        isMobile={isMobile}
+        isOpen={sidebarOpen}
+        onToggle={toggleSidebar}
+        onClose={() => setSidebarOpen(false)}
+      />
+      <div style={getMainContentStyle()}>
+        <ClientHeader
+          clientName={client.name}
+          clientStatus={client.status}
+          clientRiskProfile={client.risk_profile}
+          nric={nric}
+          isMobile={isMobile}
+        />
         
         <h2 style={{ fontWeight: 700, fontSize: 32, marginBottom: 24 }}>Transaction Behavior</h2>
         

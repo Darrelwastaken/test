@@ -152,8 +152,7 @@ function SignUp({ onSuccess, noLayout }) {
   const navigate = useNavigate();
   const [form, setForm] = useState({
     email: '',
-    password: '',
-    dob: ''
+    password: ''
   });
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState('');
@@ -172,11 +171,7 @@ function SignUp({ onSuccess, noLayout }) {
     setSuccess('');
   }
 
-  function handleDateChange(date) {
-    setForm({ ...form, dob: date ? format(date, 'dd/MM/yyyy') : '' });
-    setErrors({ ...errors, dob: undefined });
-    setSuccess('');
-  }
+
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -187,19 +182,17 @@ function SignUp({ onSuccess, noLayout }) {
     if (!validatePassword(form.password)) {
       newErrors.password = 'Password must be at least 8 characters, include 1 number and 1 capital letter';
     }
-    if (!form.dob) {
-      newErrors.dob = 'Day of birth is required';
-    }
+
     const users = JSON.parse(localStorage.getItem('users') || '[]');
     if (users.find(u => u.email === form.email)) {
       newErrors.email = 'Email is already registered';
     }
     setErrors(newErrors);
     if (Object.keys(newErrors).length === 0) {
-      users.push({ email: form.email, password: form.password, dob: form.dob });
+      users.push({ email: form.email, password: form.password });
       localStorage.setItem('users', JSON.stringify(users));
       setSuccess('Sign up successful! Please log in.');
-      setForm({ email: '', password: '', dob: '' });
+      setForm({ email: '', password: '' });
       if (onSuccess) onSuccess();
     }
   }
@@ -265,24 +258,7 @@ function SignUp({ onSuccess, noLayout }) {
             />
             {errors.password && <div style={{color:'#dc2626', fontSize: 12, marginTop: 4}}>{errors.password}</div>}
           </div>
-          <div style={{ marginBottom: 20 }}>
-            <label style={{ display: 'block', marginBottom: 8, fontWeight: 500, color: '#374151', fontSize: 14 }}>Day of Birth:</label>
-            <ReactDatePicker
-              selected={form.dob ? parse(form.dob, 'dd/MM/yyyy', new Date()) : null}
-              onChange={handleDateChange}
-              dateFormat="dd/MM/yyyy"
-              placeholderText="dd/mm/yyyy"
-              maxDate={new Date()}
-              showMonthDropdown
-              showYearDropdown
-              dropdownMode="select"
-              required
-              wrapperClassName="date-picker"
-              className="custom-date-input"
-              popperClassName="custom-datepicker-popper"
-            />
-            {errors.dob && <div style={{color:'#dc2626', fontSize: 12, marginTop: 4}}>{errors.dob}</div>}
-          </div>
+
           <button type="submit" style={{ 
             width: '100%',
             background: '#e5e7eb', 
@@ -314,23 +290,7 @@ function SignUp({ onSuccess, noLayout }) {
             <input type="password" name="password" value={form.password} onChange={handleChange} required />
             {errors.password && <div style={{color:'red'}}>{errors.password}</div>}
           </div>
-          <div>
-            <label>Day of Birth:</label><br />
-            <ReactDatePicker
-              selected={form.dob ? parse(form.dob, 'dd/MM/yyyy', new Date()) : null}
-              onChange={handleDateChange}
-              dateFormat="dd/MM/yyyy"
-              placeholderText="dd/mm/yyyy"
-              maxDate={new Date()}
-              showMonthDropdown
-              showYearDropdown
-              dropdownMode="select"
-              required
-              wrapperClassName="date-picker"
-              className="custom-date-input"
-            />
-            {errors.dob && <div style={{color:'red'}}>{errors.dob}</div>}
-          </div>
+
           <button type="submit">Sign Up</button>
           {success && <div style={{color:'green'}}>{success}</div>}
         </form>

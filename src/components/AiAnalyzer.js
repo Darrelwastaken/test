@@ -278,7 +278,7 @@ export default function AiAnalyzer({ clientData }) {
       
       {insights.length > 0 && (
         <div style={{ marginBottom: 16 }}>
-          <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+          <div style={{ overflowY: 'visible' }}>
             {insights.map(renderItem)}
           </div>
         </div>
@@ -298,7 +298,7 @@ export default function AiAnalyzer({ clientData }) {
           }}>
             Quick Actions
           </div>
-          <div style={{ maxHeight: '120px', overflowY: 'auto' }}>
+          <div style={{ overflowY: 'visible' }}>
             {summary.recommendations.map(renderItem)}
           </div>
         </div>

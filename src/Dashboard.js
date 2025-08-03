@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FaCog } from 'react-icons/fa';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -21,6 +22,7 @@ import { useTrendData } from './hooks/useTrendData';
 import Sidebar from './Sidebar';
 import { supabase } from './supabaseClient';
 import AiAnalyzer from './components/AiAnalyzer';
+import ClientHeader from './components/ClientHeader';
 
 ChartJS.register(
   CategoryScale,
@@ -50,6 +52,15 @@ export default function Dashboard({ user }) {
   const navigate = useNavigate();
   const { nric } = useParams();
   const location = useLocation();
+  const { 
+    isMobile, 
+    sidebarOpen, 
+    setSidebarOpen, 
+    toggleSidebar, 
+    getMainContentStyle,
+    getResponsiveGridStyle,
+    getResponsiveCardStyle
+  } = useResponsiveLayout();
   
   // Use the custom hook to get all metrics
   const {
@@ -162,8 +173,14 @@ export default function Dashboard({ user }) {
   if (isLoading) {
     return (
       <div style={{ background: '#f6f7f9', minHeight: '100vh' }}>
-        <Sidebar clientId={nric} />
-        <div style={{ padding: 32, marginLeft: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)' }}>
+        <Sidebar 
+          clientId={nric} 
+          isMobile={isMobile}
+          isOpen={sidebarOpen}
+          onToggle={toggleSidebar}
+          onClose={() => setSidebarOpen(false)}
+        />
+        <div style={{ ...getMainContentStyle(), display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)' }}>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: 24, fontWeight: 600, marginBottom: 16, color: '#374151' }}>Loading Dashboard...</div>
             <div style={{ color: '#6b7280' }}>Fetching client data and generating insights</div>
@@ -176,8 +193,14 @@ export default function Dashboard({ user }) {
   if (error) {
     return (
       <div style={{ background: '#f6f7f9', minHeight: '100vh' }}>
-        <Sidebar clientId={nric} />
-        <div style={{ padding: 32, marginLeft: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)' }}>
+        <Sidebar 
+          clientId={nric} 
+          isMobile={isMobile}
+          isOpen={sidebarOpen}
+          onToggle={toggleSidebar}
+          onClose={() => setSidebarOpen(false)}
+        />
+        <div style={{ ...getMainContentStyle(), display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)' }}>
           <div style={{ textAlign: 'center', background: '#fff', padding: 32, borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
             <div style={{ fontSize: 24, fontWeight: 600, marginBottom: 16, color: '#ef4444' }}>Error Loading Dashboard</div>
             <div style={{ color: '#6b7280', marginBottom: 24 }}>{error}</div>
@@ -196,8 +219,14 @@ export default function Dashboard({ user }) {
   if (!client) {
     return (
       <div style={{ background: '#f6f7f9', minHeight: '100vh' }}>
-        <Sidebar clientId={nric} />
-        <div style={{ padding: 32, marginLeft: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)' }}>
+        <Sidebar 
+          clientId={nric} 
+          isMobile={isMobile}
+          isOpen={sidebarOpen}
+          onToggle={toggleSidebar}
+          onClose={() => setSidebarOpen(false)}
+        />
+        <div style={{ ...getMainContentStyle(), display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)' }}>
           <div style={{ textAlign: 'center', background: '#fff', padding: 32, borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
             <div style={{ fontSize: 24, fontWeight: 600, marginBottom: 16, color: '#ef4444' }}>Client Not Found</div>
             <div style={{ color: '#6b7280', marginBottom: 24 }}>The client with NRIC {nric} could not be found.</div>
@@ -229,55 +258,21 @@ export default function Dashboard({ user }) {
 
   return (
     <div style={{ background: '#f6f7f9', minHeight: '100vh' }}>
-      <Sidebar clientId={nric} />
-      <main style={{ marginLeft: 240, padding: 32 }}>
-        {/* Header */}
-        <div style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 20
-        }}>
-          <div>
-            <span style={{ fontSize: 24, fontWeight: 700 }}>{clientName || 'Client Not Found'}</span>
-            {clientStatus && (
-              <span style={{
-                marginLeft: 12,
-                background: clientStatus === 'Dormant' ? '#fde68a' : clientStatus === 'High Risk' ? '#fecaca' : '#e5e7eb',
-                color: clientStatus === 'Dormant' ? '#b45309' : clientStatus === 'High Risk' ? '#b91c1c' : '#222',
-                borderRadius: 6,
-                padding: '3px 8px',
-                fontWeight: 500,
-                fontSize: 14
-              }}>{clientStatus}</span>
-            )}
-            <div style={{ marginTop: 6, color: "#555", fontSize: 14 }}>
-              {clientRiskProfile ? (<>
-                Risk Profile <b>{clientRiskProfile}</b> &nbsp;|&nbsp; Priority
-              </>) : null}
-            </div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <button style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 6, padding: "6px 12px", fontWeight: 500, cursor: "pointer", fontSize: 14 }} onClick={() => navigate(`/edit-client-info/${nric}`)}>Edit Client Info</button>
-            <button style={{
-              background: "#222",
-              color: "#fff",
-              border: "none",
-              borderRadius: 6,
-              padding: "6px 12px",
-              fontWeight: 500,
-              cursor: "pointer",
-              fontSize: 14
-            }}>View CRM Notes</button>
-            <button
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 24, color: '#222' }}
-              title="Settings"
-              onClick={() => navigate('/settings')}
-            >
-              <FaCog />
-            </button>
-          </div>
-        </div>
+      <Sidebar 
+        clientId={nric} 
+        isMobile={isMobile}
+        isOpen={sidebarOpen}
+        onToggle={toggleSidebar}
+        onClose={() => setSidebarOpen(false)}
+      />
+      <main style={getMainContentStyle()}>
+        <ClientHeader
+          clientName={clientName}
+          clientStatus={clientStatus}
+          clientRiskProfile={clientRiskProfile}
+          nric={nric}
+          isMobile={isMobile}
+        />
 
         <h2 style={{ fontWeight: 700, fontSize: 32, marginBottom: 20 }}>Dashboard</h2>
 
@@ -285,22 +280,22 @@ export default function Dashboard({ user }) {
         {/* Removed: Total Assets, Net Position, Monthly Cash Flow, Utilization Rate */}
 
         {/* Profile and AI Insight Cards */}
-        <div style={{ display: 'flex', gap: 24, marginBottom: 24 }}>
+        <div style={getResponsiveGridStyle(2)}>
           {/* Profile Card */}
-          <div style={{ background: '#fff', borderRadius: 16, padding: 24, flex: 1, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-            <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 12 }}>{clientName || 'Client Name'}</div>
-            <div style={{ color: '#374151', fontSize: 16, marginBottom: 6, fontWeight: 500 }}>NRIC: <span style={{ fontWeight: 400 }}>{nric}</span></div>
-            <div style={{ color: '#374151', fontSize: 16, marginBottom: 6, fontWeight: 500 }}>Email: <span style={{ fontWeight: 400 }}>{client?.email || '-'}</span></div>
-            <div style={{ color: '#374151', fontSize: 16, marginBottom: 6, fontWeight: 500 }}>Status: <span style={{ fontWeight: 400 }}>{clientStatus || '-'}</span></div>
-            <div style={{ color: '#374151', fontSize: 16, marginBottom: 6, fontWeight: 500 }}>Risk Profile: <span style={{ fontWeight: 400 }}>{clientRiskProfile || '-'}</span></div>
-            <div style={{ color: '#374151', fontSize: 16, marginBottom: 6, fontWeight: 500 }}>Relationship Tier: <span style={{ fontWeight: 400 }}>{client?.relationship_tier || '-'}</span></div>
-            <div style={{ color: '#374151', fontSize: 16, marginBottom: 6, fontWeight: 500 }}>Credit Score: <span style={{ fontWeight: 400 }}>{client?.credit_score || '-'}</span></div>
-            <div style={{ color: '#374151', fontSize: 16, marginBottom: 6, fontWeight: 500 }}>DSR Ratio: <span style={{ fontWeight: 400 }}>{client?.dsr_ratio || '-'}</span></div>
-            <div style={{ color: '#374151', fontSize: 16, marginBottom: 6, fontWeight: 500 }}>Nationality: <span style={{ fontWeight: 400 }}>{client?.nationality || '-'}</span></div>
-            <div style={{ color: '#374151', fontSize: 16, marginBottom: 6, fontWeight: 500 }}>Gender: <span style={{ fontWeight: 400 }}>{client?.gender || '-'}</span></div>
-            <div style={{ color: '#374151', fontSize: 16, marginBottom: 6, fontWeight: 500 }}>Marital Status: <span style={{ fontWeight: 400 }}>{client?.marital_status || '-'}</span></div>
-            <div style={{ color: '#374151', fontSize: 16, marginBottom: 6, fontWeight: 500 }}>Employment Status: <span style={{ fontWeight: 400 }}>{client?.employment_status || '-'}</span></div>
-            <div style={{ color: '#374151', fontSize: 16, marginBottom: 6, fontWeight: 500 }}>Birthday: <span style={{ fontWeight: 400 }}>{getBirthdayFromNric(nric)}</span></div>
+          <div style={getResponsiveCardStyle()}>
+            <div style={{ fontWeight: 700, fontSize: isMobile ? 18 : 20, marginBottom: 12, wordBreak: 'break-word' }}>{clientName || 'Client Name'}</div>
+            <div style={{ color: '#374151', fontSize: isMobile ? 14 : 16, marginBottom: 6, fontWeight: 500, wordBreak: 'break-word' }}>NRIC: <span style={{ fontWeight: 400 }}>{nric}</span></div>
+            <div style={{ color: '#374151', fontSize: isMobile ? 14 : 16, marginBottom: 6, fontWeight: 500, wordBreak: 'break-word' }}>Email: <span style={{ fontWeight: 400 }}>{client?.email || '-'}</span></div>
+            <div style={{ color: '#374151', fontSize: isMobile ? 14 : 16, marginBottom: 6, fontWeight: 500, wordBreak: 'break-word' }}>Status: <span style={{ fontWeight: 400 }}>{clientStatus || '-'}</span></div>
+            <div style={{ color: '#374151', fontSize: isMobile ? 14 : 16, marginBottom: 6, fontWeight: 500, wordBreak: 'break-word' }}>Risk Profile: <span style={{ fontWeight: 400 }}>{clientRiskProfile || '-'}</span></div>
+            <div style={{ color: '#374151', fontSize: isMobile ? 14 : 16, marginBottom: 6, fontWeight: 500, wordBreak: 'break-word' }}>Relationship Tier: <span style={{ fontWeight: 400 }}>{client?.relationship_tier || '-'}</span></div>
+            <div style={{ color: '#374151', fontSize: isMobile ? 14 : 16, marginBottom: 6, fontWeight: 500, wordBreak: 'break-word' }}>Credit Score: <span style={{ fontWeight: 400 }}>{client?.credit_score || '-'}</span></div>
+            <div style={{ color: '#374151', fontSize: isMobile ? 14 : 16, marginBottom: 6, fontWeight: 500, wordBreak: 'break-word' }}>DSR Ratio: <span style={{ fontWeight: 400 }}>{client?.dsr_ratio || '-'}</span></div>
+            <div style={{ color: '#374151', fontSize: isMobile ? 14 : 16, marginBottom: 6, fontWeight: 500, wordBreak: 'break-word' }}>Nationality: <span style={{ fontWeight: 400 }}>{client?.nationality || '-'}</span></div>
+            <div style={{ color: '#374151', fontSize: isMobile ? 14 : 16, marginBottom: 6, fontWeight: 500, wordBreak: 'break-word' }}>Gender: <span style={{ fontWeight: 400 }}>{client?.gender || '-'}</span></div>
+            <div style={{ color: '#374151', fontSize: isMobile ? 14 : 16, marginBottom: 6, fontWeight: 500, wordBreak: 'break-word' }}>Marital Status: <span style={{ fontWeight: 400 }}>{client?.marital_status || '-'}</span></div>
+            <div style={{ color: '#374151', fontSize: isMobile ? 14 : 16, marginBottom: 6, fontWeight: 500, wordBreak: 'break-word' }}>Employment Status: <span style={{ fontWeight: 400 }}>{client?.employment_status || '-'}</span></div>
+            <div style={{ color: '#374151', fontSize: isMobile ? 14 : 16, marginBottom: 6, fontWeight: 500, wordBreak: 'break-word' }}>Birthday: <span style={{ fontWeight: 400 }}>{getBirthdayFromNric(nric)}</span></div>
           </div>
           {/* AI Insight Card (modular component) */}
           <div style={{ flex: 2 }}>
@@ -309,14 +304,22 @@ export default function Dashboard({ user }) {
         </div>
 
         {/* Account Balances and Transactions */}
-        <div style={{ display: "flex", gap: 24 }}>
+        <div style={{ 
+          display: "flex", 
+          flexDirection: isMobile ? "column" : "row",
+          gap: isMobile ? 16 : 24,
+          width: '100%',
+          boxSizing: 'border-box'
+        }}>
           {/* Account Balances */}
           <div style={{
             background: "#fff",
             borderRadius: 16,
-            padding: 24,
+            padding: isMobile ? 16 : 24,
             flex: 1,
-            boxShadow: "0 1px 4px rgba(0,0,0,0.04)"
+            boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+            width: '100%',
+            boxSizing: 'border-box'
           }}>
             <div style={{ fontWeight: 600, marginBottom: 8 }}>Account Balances</div>
             <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
@@ -373,12 +376,19 @@ export default function Dashboard({ user }) {
           <div style={{
             background: "#fff",
             borderRadius: 16,
-            padding: 24,
+            padding: isMobile ? 16 : 24,
             flex: 1,
-            boxShadow: "0 1px 4px rgba(0,0,0,0.04)"
+            boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+            width: '100%',
+            boxSizing: 'border-box'
           }}>
             <div style={{ fontWeight: 600, marginBottom: 8 }}>Trend</div>
-            <div style={{ display: "flex", gap: 16, marginBottom: 16 }}>
+            <div style={{ 
+              display: "flex", 
+              gap: isMobile ? 8 : 16, 
+              marginBottom: 16,
+              flexWrap: isMobile ? 'wrap' : 'nowrap'
+            }}>
               {['CASA', 'Cards', 'Investments', 'Loans'].map((tab) => (
                 <span
                   key={tab}

@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaCog } from 'react-icons/fa';
+import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import Sidebar from './Sidebar';
+import ClientHeader from './components/ClientHeader';
 import { useAIProductRecommendations } from './hooks/useAIProductRecommendations';
 import { useClientMetrics } from './hooks/useClientMetrics';
 
 export default function ProductRecommendations() {
   const { nric } = useParams();
   const navigate = useNavigate();
+  const { isMobile, sidebarOpen, setSidebarOpen, toggleSidebar, getMainContentStyle } = useResponsiveLayout();
   const { recommendations, loading, error, aiInsights } = useAIProductRecommendations(nric);
   const { client, clientName, clientStatus, clientRiskProfile } = useClientMetrics(nric);
 
@@ -19,10 +22,16 @@ export default function ProductRecommendations() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex' }}>
-        <Sidebar clientId={nric} />
-        <div style={{ flex: 1, padding: '32px', marginLeft: '240px' }}>
-          <div style={{ textAlign: 'center', padding: '48px' }}>
+      <div style={{ background: '#f6f7f9', minHeight: '100vh' }}>
+        <Sidebar 
+          clientId={nric} 
+          isMobile={isMobile}
+          isOpen={sidebarOpen}
+          onToggle={toggleSidebar}
+          onClose={() => setSidebarOpen(false)}
+        />
+        <div style={{ ...getMainContentStyle(), display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)' }}>
+          <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '18px', color: '#666' }}>Analyzing your financial profile...</div>
             <div style={{ marginTop: '16px', fontSize: '14px', color: '#999' }}>
               Generating personalized product recommendations
@@ -35,10 +44,16 @@ export default function ProductRecommendations() {
 
   if (error) {
     return (
-      <div style={{ display: 'flex' }}>
-        <Sidebar clientId={nric} />
-        <div style={{ flex: 1, padding: '32px', marginLeft: '240px' }}>
-          <div style={{ textAlign: 'center', padding: '48px' }}>
+      <div style={{ background: '#f6f7f9', minHeight: '100vh' }}>
+        <Sidebar 
+          clientId={nric} 
+          isMobile={isMobile}
+          isOpen={sidebarOpen}
+          onToggle={toggleSidebar}
+          onClose={() => setSidebarOpen(false)}
+        />
+        <div style={{ ...getMainContentStyle(), display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)' }}>
+          <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '18px', color: '#dc2626', marginBottom: '8px' }}>
               Unable to load recommendations
             </div>
@@ -53,55 +68,21 @@ export default function ProductRecommendations() {
 
   return (
     <div style={{ background: '#f6f7f9', minHeight: '100vh' }}>
-      <Sidebar clientId={nric} />
-      <main style={{ marginLeft: 240, padding: 32 }}>
-        {/* Header */}
-        <div style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 12
-        }}>
-          <div>
-            <span style={{ fontSize: 24, fontWeight: 700 }}>{clientName || 'Client Not Found'}</span>
-            {clientStatus && (
-              <span style={{
-                marginLeft: 12,
-                background: clientStatus === 'Dormant' ? '#fde68a' : clientStatus === 'High Risk' ? '#fecaca' : '#e5e7eb',
-                color: clientStatus === 'Dormant' ? '#b45309' : clientStatus === 'High Risk' ? '#b91c1c' : '#222',
-                borderRadius: 6,
-                padding: '3px 8px',
-                fontWeight: 500,
-                fontSize: 14
-              }}>{clientStatus}</span>
-            )}
-            <div style={{ marginTop: 6, color: "#555", fontSize: 14 }}>
-              {clientRiskProfile ? (<>
-                Risk Profile <b>{clientRiskProfile}</b> &nbsp;|&nbsp; Priority
-              </>) : null}
-            </div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <button style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 6, padding: "6px 12px", fontWeight: 500, cursor: "pointer", fontSize: 14 }} onClick={() => navigate(`/edit-client-info/${nric}`)}>Edit Client Info</button>
-            <button style={{
-              background: "#222",
-              color: "#fff",
-              border: "none",
-              borderRadius: 6,
-              padding: "6px 12px",
-              fontWeight: 500,
-              cursor: "pointer",
-              fontSize: 14
-            }}>View CRM Notes</button>
-            <button
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 24, color: '#222' }}
-              title="Settings"
-              onClick={() => navigate('/settings')}
-            >
-              <FaCog />
-            </button>
-          </div>
-        </div>
+      <Sidebar 
+        clientId={nric} 
+        isMobile={isMobile}
+        isOpen={sidebarOpen}
+        onToggle={toggleSidebar}
+        onClose={() => setSidebarOpen(false)}
+      />
+      <main style={getMainContentStyle()}>
+        <ClientHeader
+          clientName={clientName}
+          clientStatus={clientStatus}
+          clientRiskProfile={clientRiskProfile}
+          nric={nric}
+          isMobile={isMobile}
+        />
 
         <div style={{ 
           display: 'flex', 

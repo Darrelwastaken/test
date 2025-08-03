@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import Sidebar from './Sidebar';
+import ClientHeader from './components/ClientHeader';
 
 export default function DocumentsReports() {
   const { nric } = useParams();
+  const { isMobile, sidebarOpen, setSidebarOpen, toggleSidebar, getMainContentStyle } = useResponsiveLayout();
   const [documents, setDocuments] = useState([]);
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -109,10 +112,16 @@ export default function DocumentsReports() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex' }}>
-        <Sidebar clientId={nric} />
-        <div style={{ flex: 1, padding: '32px', marginLeft: '240px' }}>
-          <div style={{ textAlign: 'center', padding: '48px' }}>
+      <div style={{ background: '#f6f7f9', minHeight: '100vh' }}>
+        <Sidebar 
+          clientId={nric} 
+          isMobile={isMobile}
+          isOpen={sidebarOpen}
+          onToggle={toggleSidebar}
+          onClose={() => setSidebarOpen(false)}
+        />
+        <div style={{ ...getMainContentStyle(), display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)' }}>
+          <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '18px', color: '#666' }}>Loading documents and reports...</div>
           </div>
         </div>
@@ -121,9 +130,15 @@ export default function DocumentsReports() {
   }
 
   return (
-    <div style={{ display: 'flex' }}>
-      <Sidebar clientId={nric} />
-      <div style={{ flex: 1, padding: '32px', marginLeft: '240px' }}>
+    <div style={{ background: '#f6f7f9', minHeight: '100vh' }}>
+      <Sidebar 
+        clientId={nric} 
+        isMobile={isMobile}
+        isOpen={sidebarOpen}
+        onToggle={toggleSidebar}
+        onClose={() => setSidebarOpen(false)}
+      />
+      <div style={getMainContentStyle()}>
         <div style={{ marginBottom: '32px' }}>
           <h1 style={{ fontSize: '28px', fontWeight: '700', marginBottom: '8px' }}>
             Documents & Reports

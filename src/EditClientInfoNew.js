@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaLock, FaSave, FaArrowLeft } from 'react-icons/fa';
+import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import Sidebar from './Sidebar';
+import ClientHeader from './components/ClientHeader';
 import { supabase } from './supabaseClient';
 import { deleteAIInsights } from './utils/aiInsightsStorage';
 
@@ -25,6 +27,7 @@ function formatNRICInput(value) {
 export default function EditClientInfoNew() {
   const { nric: paramNric } = useParams();
   const navigate = useNavigate();
+  const { isMobile, sidebarOpen, setSidebarOpen, toggleSidebar, getMainContentStyle } = useResponsiveLayout();
   
   // Form state for manually input fields only
   const [formData, setFormData] = useState({
@@ -302,8 +305,14 @@ export default function EditClientInfoNew() {
   if (isLoading) {
     return (
       <div style={{ background: '#f6f7f9', minHeight: '100vh' }}>
-        <Sidebar clientId={paramNric} />
-        <div style={{ padding: 32, marginLeft: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)' }}>
+        <Sidebar 
+          clientId={paramNric} 
+          isMobile={isMobile}
+          isOpen={sidebarOpen}
+          onToggle={toggleSidebar}
+          onClose={() => setSidebarOpen(false)}
+        />
+        <div style={{ ...getMainContentStyle(), display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)' }}>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: 24, fontWeight: 600, marginBottom: 16, color: '#374151' }}>Loading Client Data...</div>
           </div>
@@ -313,10 +322,26 @@ export default function EditClientInfoNew() {
   }
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#f6f7f9" }}>
-      <Sidebar clientId={paramNric} />
+    <div style={{ background: '#f6f7f9', minHeight: '100vh' }}>
+      <Sidebar 
+        clientId={paramNric} 
+        isMobile={isMobile}
+        isOpen={sidebarOpen}
+        onToggle={toggleSidebar}
+        onClose={() => setSidebarOpen(false)}
+      />
       
-      <main style={{ flex: 1, padding: 32, marginLeft: 240 }}>
+      <main style={getMainContentStyle()}>
+        <ClientHeader
+          clientName={formData.name}
+          clientStatus={formData.status}
+          clientRiskProfile={formData.risk_profile}
+          nric={paramNric}
+          isMobile={isMobile}
+          showEditButton={false}
+          showCrmButton={false}
+        />
+        
         {/* Header */}
         <div style={{
           display: "flex",

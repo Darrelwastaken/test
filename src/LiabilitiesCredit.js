@@ -1,13 +1,16 @@
 import React from "react";
 import { useParams, useNavigate } from 'react-router-dom';
+import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 import Sidebar from './Sidebar';
 import { FaCog } from 'react-icons/fa';
+import ClientHeader from './components/ClientHeader';
 import { formatMYR } from './utils';
 import { useClientMetrics } from './hooks/useClientMetrics';
 
 export default function LiabilitiesCredit() {
   const { nric } = useParams();
   const navigate = useNavigate();
+  const { isMobile, sidebarOpen, setSidebarOpen, toggleSidebar, getMainContentStyle } = useResponsiveLayout();
   
   // Use the custom hook to get all metrics
   const {
@@ -24,8 +27,14 @@ export default function LiabilitiesCredit() {
   if (isLoading) {
     return (
       <div style={{ background: '#f6f7f9', minHeight: '100vh' }}>
-        <Sidebar clientId={nric} />
-        <div style={{ padding: 32, marginLeft: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)' }}>
+        <Sidebar 
+          clientId={nric} 
+          isMobile={isMobile}
+          isOpen={sidebarOpen}
+          onToggle={toggleSidebar}
+          onClose={() => setSidebarOpen(false)}
+        />
+        <div style={{ ...getMainContentStyle(), display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)' }}>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: 24, fontWeight: 600, marginBottom: 16, color: '#374151' }}>Loading Liabilities & Credit...</div>
             <div style={{ color: '#6b7280' }}>Fetching client liabilities and credit information</div>
@@ -38,8 +47,14 @@ export default function LiabilitiesCredit() {
   if (error) {
     return (
       <div style={{ background: '#f6f7f9', minHeight: '100vh' }}>
-        <Sidebar clientId={nric} />
-        <div style={{ padding: 32, marginLeft: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)' }}>
+        <Sidebar 
+          clientId={nric} 
+          isMobile={isMobile}
+          isOpen={sidebarOpen}
+          onToggle={toggleSidebar}
+          onClose={() => setSidebarOpen(false)}
+        />
+        <div style={{ ...getMainContentStyle(), display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)' }}>
           <div style={{ textAlign: 'center', background: '#fff', padding: 32, borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
             <div style={{ fontSize: 24, fontWeight: 600, marginBottom: 16, color: '#ef4444' }}>Error Loading Liabilities & Credit</div>
             <div style={{ color: '#6b7280', marginBottom: 24 }}>{error}</div>
@@ -58,8 +73,14 @@ export default function LiabilitiesCredit() {
   if (!client || !manual) {
     return (
       <div style={{ background: '#f6f7f9', minHeight: '100vh' }}>
-        <Sidebar clientId={nric} />
-        <div style={{ padding: 32, marginLeft: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)' }}>
+        <Sidebar 
+          clientId={nric} 
+          isMobile={isMobile}
+          isOpen={sidebarOpen}
+          onToggle={toggleSidebar}
+          onClose={() => setSidebarOpen(false)}
+        />
+        <div style={{ ...getMainContentStyle(), display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 64px)' }}>
           <div style={{ textAlign: 'center', background: '#fff', padding: 32, borderRadius: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
             <div style={{ fontSize: 24, fontWeight: 600, marginBottom: 16, color: '#ef4444' }}>
               {!client ? 'Client Not Found' : 'Liabilities Data Not Available'}
@@ -88,27 +109,21 @@ export default function LiabilitiesCredit() {
 
   return (
     <div style={{ background: '#f6f7f9', minHeight: '100vh' }}>
-      <Sidebar clientId={nric} />
-      <div style={{ padding: 32, marginLeft: 240 }}>
-        {/* Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 32 }}>
-          <div>
-            <span style={{ fontSize: 28, fontWeight: 700 }}>{clientName || 'Client Not Found'}</span>
-            {clientStatus && (
-              <span style={{ marginLeft: 16, background: clientStatus === 'Dormant' ? '#fde68a' : clientStatus === 'High Risk' ? '#fecaca' : '#e5e7eb', color: clientStatus === 'Dormant' ? '#b45309' : clientStatus === 'High Risk' ? '#b91c1c' : '#222', borderRadius: 8, padding: '4px 12px', fontWeight: 500, fontSize: 16 }}>{clientStatus}</span>
-            )}
-            <div style={{ marginTop: 8, color: "#555" }}>
-              {clientRiskProfile ? (<>
-                Risk Profile <b>{clientRiskProfile}</b> &nbsp;|&nbsp; Priority
-              </>) : null}
-            </div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <button style={{ background: "#fff", border: "1px solid #e5e7eb", borderRadius: 8, padding: "8px 16px", fontWeight: 500, cursor: "pointer" }} onClick={() => navigate(`/edit-client-info/${nric}`)}>Edit Client Info</button>
-            <button style={{ background: "#222", color: "#fff", border: "none", borderRadius: 8, padding: "8px 16px", fontWeight: 500, cursor: "pointer" }}>View CRM Notes</button>
-            <button style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 28, color: '#222' }} title="Settings" onClick={() => navigate('/settings')}><FaCog /></button>
-          </div>
-        </div>
+      <Sidebar 
+        clientId={nric} 
+        isMobile={isMobile}
+        isOpen={sidebarOpen}
+        onToggle={toggleSidebar}
+        onClose={() => setSidebarOpen(false)}
+      />
+      <div style={getMainContentStyle()}>
+        <ClientHeader
+          clientName={clientName}
+          clientStatus={clientStatus}
+          clientRiskProfile={clientRiskProfile}
+          nric={nric}
+          isMobile={isMobile}
+        />
         
         <h2 style={{ fontWeight: 700, fontSize: 32, marginBottom: 24 }}>Liabilities & Credit</h2>
         
