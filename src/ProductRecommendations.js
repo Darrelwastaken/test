@@ -75,7 +75,11 @@ export default function ProductRecommendations() {
         onToggle={toggleSidebar}
         onClose={() => setSidebarOpen(false)}
       />
-      <main style={getMainContentStyle()}>
+      <main style={{
+        ...getMainContentStyle(),
+        paddingBottom: isMobile ? '100px' : '32px',
+        overflowX: 'hidden'
+      }}>
         <ClientHeader
           clientName={clientName}
           clientStatus={clientStatus}
@@ -88,10 +92,15 @@ export default function ProductRecommendations() {
         <div style={{ 
           display: 'flex', 
           justifyContent: 'space-between', 
-          alignItems: 'center', 
+          alignItems: isMobile ? 'flex-start' : 'center',
+          flexDirection: isMobile ? 'column' : 'row',
+          gap: isMobile ? 16 : 0,
           marginBottom: '16px' 
         }}>
-          <h2 style={{ fontWeight: 700, fontSize: 32 }}>Product Recommendations</h2>
+          <h2 style={{ 
+            fontWeight: 700, 
+            fontSize: isMobile ? 24 : 32 
+          }}>Product Recommendations</h2>
           <button
             onClick={() => navigate(`/products/${nric}`)}
             style={{
@@ -116,7 +125,7 @@ export default function ProductRecommendations() {
         <div style={{
           background: '#fff',
           borderRadius: '16px',
-          padding: '32px',
+          padding: isMobile ? '20px' : '32px',
           border: '1px solid #e5e7eb',
           boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
         }}>

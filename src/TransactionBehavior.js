@@ -157,7 +157,11 @@ export default function TransactionBehavior() {
         onToggle={toggleSidebar}
         onClose={() => setSidebarOpen(false)}
       />
-      <div style={getMainContentStyle()}>
+      <div style={{
+        ...getMainContentStyle(),
+        paddingBottom: isMobile ? '100px' : '32px',
+        overflowX: 'hidden'
+      }}>
         <ClientHeader
           clientName={client.name}
           clientStatus={client.status}
@@ -167,13 +171,30 @@ export default function TransactionBehavior() {
           showCrmButton={false}
         />
         
-        <h2 style={{ fontWeight: 700, fontSize: 32, marginBottom: 24 }}>Transaction Behavior</h2>
+        <h2 style={{ 
+          fontWeight: 700, 
+          fontSize: isMobile ? 24 : 32, 
+          marginBottom: isMobile ? 16 : 24 
+        }}>Transaction Behavior</h2>
         
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: isMobile ? 16 : 24 
+        }}>
           {/* Recent Transactions Summary */}
-          <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+          <div style={{ 
+            background: '#fff', 
+            borderRadius: 16, 
+            padding: isMobile ? 16 : 24, 
+            boxShadow: '0 1px 4px rgba(0,0,0,0.04)' 
+          }}>
             <div style={{ fontWeight: 600, fontSize: 20, marginBottom: 16 }}>Recent Transactions Summary (across products)</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))', 
+              gap: isMobile ? 12 : 16 
+            }}>
               <div style={{ background: '#f8fafc', padding: 16, borderRadius: 8 }}>
                 <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Total Transactions (30 days)</div>
                 <div style={{ fontSize: 24, fontWeight: 600, color: '#222' }}>{totalTransactions}</div>
@@ -194,9 +215,18 @@ export default function TransactionBehavior() {
           </div>
 
           {/* Categorised Spending */}
-          <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-            <div style={{ fontWeight: 600, fontSize: 20, marginBottom: 16 }}>Categorised Spending (e.g., groceries, travel, utilities)</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 16 }}>
+          <div style={{ 
+            background: '#fff', 
+            borderRadius: 16, 
+            padding: isMobile ? 16 : 24, 
+            boxShadow: '0 1px 4px rgba(0,0,0,0.04)' 
+          }}>
+                          <div style={{ fontWeight: 600, fontSize: 20, marginBottom: 16 }}>Categorised Spending (e.g., groceries, travel, utilities)</div>
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(250px, 1fr))', 
+                gap: isMobile ? 12 : 16 
+              }}>
               {categorisedSpending.length > 0 ? (
                 categorisedSpending.slice(0, 6).map((spending, index) => {
                   const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
@@ -217,7 +247,12 @@ export default function TransactionBehavior() {
           </div>
 
           {/* Large or Unusual Transactions */}
-          <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+          <div style={{ 
+            background: '#fff', 
+            borderRadius: 16, 
+            padding: isMobile ? 16 : 24, 
+            boxShadow: '0 1px 4px rgba(0,0,0,0.04)' 
+          }}>
             <div style={{ fontWeight: 600, fontSize: 20, marginBottom: 16 }}>Large or Unusual Transactions</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {unusualTransactions.length > 0 ? (
@@ -241,9 +276,18 @@ export default function TransactionBehavior() {
           </div>
 
           {/* Fund Transfers */}
-          <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-            <div style={{ fontWeight: 600, fontSize: 20, marginBottom: 16 }}>Fund Transfers (Intra-bank, Inter-bank, Cross-border)</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
+          <div style={{ 
+            background: '#fff', 
+            borderRadius: 16, 
+            padding: isMobile ? 16 : 24, 
+            boxShadow: '0 1px 4px rgba(0,0,0,0.04)' 
+          }}>
+                          <div style={{ fontWeight: 600, fontSize: 20, marginBottom: 16 }}>Fund Transfers (Intra-bank, Inter-bank, Cross-border)</div>
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(300px, 1fr))', 
+                gap: isMobile ? 12 : 16 
+              }}>
               <div style={{ background: '#f8fafc', padding: 16, borderRadius: 8 }}>
                 <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Intra-bank Transfers</div>
                 <div style={{ fontSize: 18, fontWeight: 600, color: '#222', marginBottom: 4 }}>{intraBank.length} transactions</div>

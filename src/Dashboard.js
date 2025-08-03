@@ -265,7 +265,11 @@ export default function Dashboard({ user }) {
         onToggle={toggleSidebar}
         onClose={() => setSidebarOpen(false)}
       />
-      <main style={getMainContentStyle()}>
+      <main style={{
+        ...getMainContentStyle(),
+        paddingBottom: isMobile ? '100px' : '32px',
+        overflowX: 'hidden'
+      }}>
         <ClientHeader
           clientName={clientName}
           clientStatus={clientStatus}
@@ -275,7 +279,11 @@ export default function Dashboard({ user }) {
           showCrmButton={false}
         />
 
-        <h2 style={{ fontWeight: 700, fontSize: 32, marginBottom: 20 }}>Dashboard</h2>
+        <h2 style={{ 
+          fontWeight: 700, 
+          fontSize: isMobile ? 24 : 32, 
+          marginBottom: isMobile ? 16 : 20 
+        }}>Dashboard</h2>
 
         {/* Key Metrics */}
         {/* Removed: Total Assets, Net Position, Monthly Cash Flow, Utilization Rate */}

@@ -157,7 +157,13 @@ export default function FinancialSummary() {
         onToggle={toggleSidebar}
         onClose={() => setSidebarOpen(false)}
       />
-      <div style={{ ...getMainContentStyle(), boxSizing: 'border-box', overflowX: 'hidden', width: '100%' }}>
+      <div style={{ 
+        ...getMainContentStyle(), 
+        boxSizing: 'border-box', 
+        overflowX: 'hidden', 
+        width: '100%',
+        paddingBottom: isMobile ? '100px' : '32px'
+      }}>
         <ClientHeader
           clientName={clientName}
           clientStatus={clientStatus}
@@ -166,22 +172,32 @@ export default function FinancialSummary() {
           isMobile={isMobile}
           showCrmButton={false}
         />
-
-        <h2 style={{ fontWeight: 700, fontSize: 32, marginBottom: 20 }}>Financial Summary</h2>
+        <h2 style={{ 
+          fontWeight: 700, 
+          fontSize: isMobile ? 24 : 32, 
+          marginBottom: isMobile ? 16 : 20 
+        }}>Financial Summary</h2>
 
         {/* Responsive Top Row - Key Financial Metrics */}
         <div
           style={{
             display: 'grid',
-            gap: 8,
+            gap: isMobile ? 12 : 8,
             marginBottom: 20,
-            gridTemplateColumns: 'repeat(2, 1fr)',
+            gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
             width: '100%',
             boxSizing: 'border-box',
           }}
         >
           {/* Total Assets */}
-          <div style={{ background: '#fff', borderRadius: 8, padding: '12px 8px', boxShadow: '0 1px 2px rgba(0,0,0,0.03)', width: '100%', boxSizing: 'border-box' }}>
+          <div style={{ 
+            background: '#fff', 
+            borderRadius: 8, 
+            padding: isMobile ? '16px 12px' : '12px 8px', 
+            boxShadow: '0 1px 2px rgba(0,0,0,0.03)', 
+            width: '100%', 
+            boxSizing: 'border-box' 
+          }}>
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: 6 }}>
               <div style={{ width: 28, height: 28, background: '#dbeafe', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
                 <FaArrowUp style={{ color: '#1e40af', fontSize: 14 }} />
@@ -197,7 +213,14 @@ export default function FinancialSummary() {
           </div>
 
           {/* Total Liabilities */}
-          <div style={{ background: '#fff', borderRadius: 8, padding: '12px 8px', boxShadow: '0 1px 2px rgba(0,0,0,0.03)', width: '100%', boxSizing: 'border-box' }}>
+          <div style={{ 
+            background: '#fff', 
+            borderRadius: 8, 
+            padding: isMobile ? '16px 12px' : '12px 8px', 
+            boxShadow: '0 1px 2px rgba(0,0,0,0.03)', 
+            width: '100%', 
+            boxSizing: 'border-box' 
+          }}>
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: 6 }}>
               <div style={{ width: 28, height: 28, background: '#fecaca', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
                 <FaArrowDown style={{ color: '#dc2626', fontSize: 14 }} />
@@ -213,7 +236,14 @@ export default function FinancialSummary() {
           </div>
 
           {/* Net Position */}
-          <div style={{ background: '#fff', borderRadius: 8, padding: '12px 8px', boxShadow: '0 1px 2px rgba(0,0,0,0.03)', width: '100%', boxSizing: 'border-box' }}>
+          <div style={{ 
+            background: '#fff', 
+            borderRadius: 8, 
+            padding: isMobile ? '16px 12px' : '12px 8px', 
+            boxShadow: '0 1px 2px rgba(0,0,0,0.03)', 
+            width: '100%', 
+            boxSizing: 'border-box' 
+          }}>
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: 6 }}>
               <div style={{ width: 28, height: 28, background: '#dcfce7', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
                 <FaArrowUp style={{ color: '#16a34a', fontSize: 14 }} />
@@ -229,7 +259,14 @@ export default function FinancialSummary() {
           </div>
 
           {/* Monthly Net Cash Flow */}
-          <div style={{ background: '#fff', borderRadius: 8, padding: '12px 8px', boxShadow: '0 1px 2px rgba(0,0,0,0.03)', width: '100%', boxSizing: 'border-box' }}>
+          <div style={{ 
+            background: '#fff', 
+            borderRadius: 8, 
+            padding: isMobile ? '16px 12px' : '12px 8px', 
+            boxShadow: '0 1px 2px rgba(0,0,0,0.03)', 
+            width: '100%', 
+            boxSizing: 'border-box' 
+          }}>
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: 6 }}>
               <div style={{ width: 28, height: 28, background: '#fef3c7', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
                 <FaArrowUp style={{ color: '#d97706', fontSize: 14 }} />
@@ -246,9 +283,19 @@ export default function FinancialSummary() {
         </div>
 
         {/* Second Row - Product Holdings and Relationship Info */}
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12, marginBottom: 20 }}>
-          {/* Product Holding Summary */}
-          <div style={{ background: '#fff', borderRadius: 8, padding: '16px 12px', border: '1px solid #e5e7eb' }}>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr', 
+          gap: isMobile ? 16 : 12, 
+          marginBottom: 20 
+        }}>
+                      {/* Product Holding Summary */}
+            <div style={{ 
+              background: '#fff', 
+              borderRadius: 8, 
+              padding: isMobile ? '20px 16px' : '16px 12px', 
+              border: '1px solid #e5e7eb' 
+            }}>
             <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 14 }}>Product Holding Summary</h3>
             <div style={{ display: 'grid', gap: 8 }}>
               {financialData.productHoldings.map((product, index) => (
@@ -274,7 +321,12 @@ export default function FinancialSummary() {
           </div>
 
           {/* Relationship Tier & Profitability */}
-          <div style={{ background: '#fff', borderRadius: 8, padding: '16px 12px', border: '1px solid #e5e7eb' }}>
+          <div style={{ 
+            background: '#fff', 
+            borderRadius: 8, 
+            padding: isMobile ? '20px 16px' : '16px 12px', 
+            border: '1px solid #e5e7eb' 
+          }}>
             <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>Relationship & Profitability</h3>
             
             <div style={{ marginBottom: 16 }}>
@@ -326,7 +378,12 @@ export default function FinancialSummary() {
           marginBottom: isMobile ? 16 : 20 
         }}>
           {/* Credit Utilization vs Limits */}
-          <div style={{ background: '#fff', borderRadius: 8, padding: '16px 12px', border: '1px solid #e5e7eb' }}>
+          <div style={{ 
+            background: '#fff', 
+            borderRadius: 8, 
+            padding: isMobile ? '20px 16px' : '16px 12px', 
+            border: '1px solid #e5e7eb' 
+          }}>
             <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>Credit Utilization vs Limits</h3>
             
             <div style={{ marginBottom: 16 }}>
@@ -361,7 +418,12 @@ export default function FinancialSummary() {
           </div>
 
           {/* Early Risk Indicators */}
-          <div style={{ background: '#fff', borderRadius: 8, padding: '16px 12px', border: '1px solid #e5e7eb' }}>
+          <div style={{ 
+            background: '#fff', 
+            borderRadius: 8, 
+            padding: isMobile ? '20px 16px' : '16px 12px', 
+            border: '1px solid #e5e7eb' 
+          }}>
             <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>Early Risk Indicators</h3>
             
             <div style={{ display: 'grid', gap: 8 }}>
@@ -394,7 +456,13 @@ export default function FinancialSummary() {
         </div>
 
         {/* Fourth Row - Financial Trends Chart */}
-        <div style={{ background: '#fff', borderRadius: 8, padding: '16px 12px', border: '1px solid #e5e7eb', marginBottom: 20 }}>
+        <div style={{ 
+          background: '#fff', 
+          borderRadius: 8, 
+          padding: isMobile ? '20px 16px' : '16px 12px', 
+          border: '1px solid #e5e7eb', 
+          marginBottom: isMobile ? 16 : 20 
+        }}>
           <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 12 }}>Financial Trends (6-Month Overview)</h3>
           <div style={{ height: 250 }}>
             <Line 

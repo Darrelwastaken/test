@@ -131,7 +131,11 @@ export default function InvestmentsPortfolio() {
         onToggle={toggleSidebar}
         onClose={() => setSidebarOpen(false)}
       />
-      <div style={getMainContentStyle()}>
+      <div style={{
+        ...getMainContentStyle(),
+        paddingBottom: isMobile ? '100px' : '32px',
+        overflowX: 'hidden'
+      }}>
         <ClientHeader
           clientName={clientName}
           clientStatus={clientStatus}
@@ -141,19 +145,43 @@ export default function InvestmentsPortfolio() {
           showCrmButton={false}
         />
         
-        <h2 style={{ fontWeight: 700, fontSize: 32, marginBottom: 24 }}>Investments & Portfolio</h2>
+        <h2 style={{ 
+          fontWeight: 700, 
+          fontSize: isMobile ? 24 : 32, 
+          marginBottom: isMobile ? 16 : 24 
+        }}>Investments & Portfolio</h2>
         
         {/* Portfolio Summary Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 16, marginBottom: 24 }}>
-          <div style={{ background: '#fff', borderRadius: 12, padding: 20, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-            <div style={{ fontSize: 14, color: '#6b7280', marginBottom: 4 }}>Total Portfolio Value</div>
-            <div style={{ fontSize: 24, fontWeight: 700, color: '#1e40af' }}>{formatMYR(totalPortfolioValue)}</div>
-          </div>
-          <div style={{ background: '#fff', borderRadius: 12, padding: 20, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(250px, 1fr))', 
+          gap: isMobile ? 12 : 16, 
+          marginBottom: isMobile ? 16 : 24 
+        }}>
+                      <div style={{ 
+              background: '#fff', 
+              borderRadius: 12, 
+              padding: isMobile ? 16 : 20, 
+              boxShadow: '0 1px 4px rgba(0,0,0,0.04)' 
+            }}>
+              <div style={{ fontSize: 14, color: '#6b7280', marginBottom: 4 }}>Total Portfolio Value</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: '#1e40af' }}>{formatMYR(totalPortfolioValue)}</div>
+            </div>
+          <div style={{ 
+            background: '#fff', 
+            borderRadius: 12, 
+            padding: isMobile ? 16 : 20, 
+            boxShadow: '0 1px 4px rgba(0,0,0,0.04)' 
+          }}>
             <div style={{ fontSize: 14, color: '#6b7280', marginBottom: 4 }}>Number of Holdings</div>
             <div style={{ fontSize: 24, fontWeight: 700, color: '#10b981' }}>{productHoldings.length}</div>
           </div>
-          <div style={{ background: '#fff', borderRadius: 12, padding: 20, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+          <div style={{ 
+            background: '#fff', 
+            borderRadius: 12, 
+            padding: isMobile ? 16 : 20, 
+            boxShadow: '0 1px 4px rgba(0,0,0,0.04)' 
+          }}>
             <div style={{ fontSize: 14, color: '#6b7280', marginBottom: 4 }}>Asset Utilization</div>
             <div style={{ fontSize: 24, fontWeight: 700, color: '#f59e0b' }}>{calculated?.asset_utilization?.toFixed(1) || '0'}%</div>
           </div>
@@ -164,7 +192,7 @@ export default function InvestmentsPortfolio() {
           display: 'flex', 
           gap: isMobile ? 16 : 32, 
           flexWrap: 'wrap', 
-          marginBottom: 32,
+          marginBottom: isMobile ? 16 : 32,
           flexDirection: isMobile ? 'column' : 'row'
         }}>
           <div style={{ 
