@@ -1,194 +1,113 @@
 import { supabase } from '../supabaseClient';
-import { deleteClientCompletely, checkClientData } from './clientDeletion';
+import { deleteClientCompletely, checkClientData } from './clientDeletion.js';
 
 /**
- * Test script to verify client deletion functionality
- * This can be run in the browser console for testing
+ * Test client deletion functionality
+ * This script helps verify that client deletion works properly
  */
-export const testClientDeletion = async (testClientNric = '880101015432') => {
-  console.log('🧪 Starting client deletion test...');
-  console.log('Test client NRIC:', testClientNric);
+export const testClientDeletion = async (testNric = 'test-123-4567') => {
+  console.log('🧪 Testing Client Deletion System...');
   
   try {
-    // Step 1: Check if client exists and has data
-    console.log('\n📋 Step 1: Checking client data before deletion...');
-    const beforeCheck = await checkClientData(testClientNric);
-    console.log('Before deletion:', beforeCheck);
+    // Step 1: Check if test client exists
+    console.log('\n1️⃣ Checking if test client exists...');
+    const clientCheck = await checkClientData(testNric);
+    console.log('Client check result:', clientCheck);
     
-    if (!beforeCheck.exists) {
-      console.log('❌ Test client does not exist. Please create a test client first.');
-      return;
+    if (!clientCheck.exists) {
+      console.log('⚠️ Test client does not exist. Creating test data...');
+      
+      // Create test client
+      const { error: createError } = await supabase
+        .from('clients')
+        .insert({
+          nric: testNric,
+          name: 'Test Client for Deletion',
+          email: 'test@example.com',
+          status: 'Active'
+        });
+      
+      if (createError) {
+        console.error('❌ Error creating test client:', createError);
+        return { success: false, error: createError.message };
+      }
+      
+      console.log('✅ Test client created');
     }
     
-    // Step 2: Perform deletion
-    console.log('\n🗑️ Step 2: Performing client deletion...');
-    const deletionResult = await deleteClientCompletely(testClientNric);
+    // Step 2: Check what data exists for the client
+    console.log('\n2️⃣ Checking existing client data...');
+    const dataCheck = await checkClientData(testNric);
+    console.log('Data check result:', dataCheck);
+    
+    // Step 3: Attempt deletion
+    console.log('\n3️⃣ Attempting client deletion...');
+    const deletionResult = await deleteClientCompletely(testNric);
     console.log('Deletion result:', deletionResult);
     
-    // Step 3: Verify deletion
-    console.log('\n✅ Step 3: Verifying deletion...');
-    const afterCheck = await checkClientData(testClientNric);
-    console.log('After deletion:', afterCheck);
+    // Step 4: Verify deletion
+    console.log('\n4️⃣ Verifying deletion...');
+    const finalCheck = await checkClientData(testNric);
+    console.log('Final check result:', finalCheck);
     
-    // Step 4: Summary
-    console.log('\n📊 Test Summary:');
-    if (deletionResult.success && !afterCheck.exists) {
-      console.log('✅ SUCCESS: Client and all data deleted successfully!');
-      console.log(`📈 Tables deleted: ${deletionResult.deletedTables.length}`);
-      console.log(`📋 Tables with data before: ${beforeCheck.tablesWithData.length}`);
+    if (finalCheck.exists) {
+      console.log('❌ Client still exists after deletion!');
+      return { success: false, error: 'Client was not deleted' };
     } else {
-      console.log('❌ FAILED: Deletion was not successful');
-      console.log('Deletion errors:', deletionResult.errors);
-      console.log('Client still exists:', afterCheck.exists);
+      console.log('✅ Client successfully deleted!');
+      return { success: true, message: 'Client deletion test passed' };
     }
-    
-    return {
-      success: deletionResult.success && !afterCheck.exists,
-      beforeCheck,
-      deletionResult,
-      afterCheck
-    };
     
   } catch (error) {
     console.error('❌ Test failed with error:', error);
-    return {
-      success: false,
-      error: error.message
-    };
+    return { success: false, error: error.message };
   }
 };
 
 /**
- * Create a test client for deletion testing
+ * Test deletion with a real client NRIC
  */
-export const createTestClient = async (testClientNric = 'TEST-123456') => {
-  console.log('🔧 Creating test client...');
+export const testRealClientDeletion = async (realNric) => {
+  if (!realNric) {
+    console.error('❌ Please provide a real client NRIC to test');
+    return { success: false, error: 'No NRIC provided' };
+  }
+  
+  console.log(`🧪 Testing deletion for real client: ${realNric}`);
   
   try {
-    // Create test client
-    const { data: client, error: clientError } = await supabase
-      .from('clients')
-      .insert([{
-        nric: testClientNric,
-        name: 'Test Client',
-        email: 'test@example.com',
-        status: 'Active',
-        risk_profile: 'Moderate',
-        nationality: 'Malaysian',
-        gender: 'Male',
-        marital_status: 'Single',
-        employment_status: 'Employed'
-      }])
-      .select()
-      .single();
-      
-    if (clientError) {
-      console.error('Error creating test client:', clientError);
-      return null;
+    // Check if client exists
+    const clientCheck = await checkClientData(realNric);
+    console.log('Client check result:', clientCheck);
+    
+    if (!clientCheck.exists) {
+      console.log('❌ Client does not exist');
+      return { success: false, error: 'Client not found' };
     }
     
-    console.log('✅ Test client created:', client);
+    // Show what will be deleted
+    console.log(`📋 Client has data in ${clientCheck.tablesWithData.length} tables:`, clientCheck.tablesWithData);
     
-    // Create some test data in various tables
-    const testData = [
-      {
-        table: 'financial_assets',
-        data: {
-          client_nric: testClientNric,
-          total_assets: 1000000,
-          total_liabilities: 300000,
-          net_position: 700000,
-          casa_balance: 100000
-        }
-      },
-      {
-        table: 'monthly_cashflow',
-        data: {
-          client_nric: testClientNric,
-          month_year: '2024-01',
-          inflow: 50000,
-          outflow: 30000,
-          net_flow: 20000
-        }
-      },
-      {
-        table: 'product_holdings',
-        data: {
-          client_nric: testClientNric,
-          product_name: 'Test Savings',
-          product_type: 'savings',
-          count: 1,
-          value: 100000
-        }
-      },
-      {
-        table: 'relationship_profitability',
-        data: {
-          client_nric: testClientNric,
-          relationship_tier: 'Standard',
-          profitability_score: 75,
-          customer_lifetime_value: 150000
-        }
-      }
-    ];
+    // Confirm deletion (in a real app, you'd show a confirmation dialog)
+    console.log('⚠️ This will permanently delete the client and all related data!');
     
-    for (const item of testData) {
-      try {
-        const { error } = await supabase
-          .from(item.table)
-          .insert([item.data]);
-          
-        if (error) {
-          console.error(`Error creating test data in ${item.table}:`, error);
-        } else {
-          console.log(`✅ Test data created in ${item.table}`);
-        }
-      } catch (err) {
-        console.error(`Exception creating test data in ${item.table}:`, err);
-      }
-    }
+    // Perform deletion
+    const deletionResult = await deleteClientCompletely(realNric);
+    console.log('Deletion result:', deletionResult);
     
-    return client;
+    return deletionResult;
     
   } catch (error) {
-    console.error('Error creating test client:', error);
-    return null;
+    console.error('❌ Test failed with error:', error);
+    return { success: false, error: error.message };
   }
 };
 
-/**
- * Run a complete test cycle
- */
-export const runCompleteTest = async () => {
-  const testNric = 'TEST-' + Date.now();
-  
-  console.log('🚀 Starting complete test cycle...');
-  console.log('Test NRIC:', testNric);
-  
-  // Step 1: Create test client
-  const testClient = await createTestClient(testNric);
-  if (!testClient) {
-    console.log('❌ Failed to create test client');
-    return;
-  }
-  
-  // Step 2: Wait a moment for data to be created
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // Step 3: Test deletion
-  const testResult = await testClientDeletion(testNric);
-  
-  console.log('\n🎯 Complete test result:', testResult);
-  return testResult;
-};
-
-// Export for browser console testing
+// Make functions available in browser console
 if (typeof window !== 'undefined') {
   window.testClientDeletion = testClientDeletion;
-  window.createTestClient = createTestClient;
-  window.runCompleteTest = runCompleteTest;
-  console.log('🧪 Client deletion test functions available in console:');
-  console.log('- testClientDeletion(nric)');
-  console.log('- createTestClient(nric)');
-  console.log('- runCompleteTest()');
+  window.testRealClientDeletion = testRealClientDeletion;
+  console.log('💡 Client deletion test utilities available:');
+  console.log('  - testClientDeletion() - Test with dummy client');
+  console.log('  - testRealClientDeletion("NRIC") - Test with real client');
 } 

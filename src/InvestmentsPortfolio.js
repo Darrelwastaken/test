@@ -138,6 +138,7 @@ export default function InvestmentsPortfolio() {
           clientRiskProfile={clientRiskProfile}
           nric={nric}
           isMobile={isMobile}
+          showCrmButton={false}
         />
         
         <h2 style={{ fontWeight: 700, fontSize: 32, marginBottom: 24 }}>Investments & Portfolio</h2>
@@ -159,8 +160,25 @@ export default function InvestmentsPortfolio() {
         </div>
 
         {/* Portfolio Overview and Holdings in a row */}
-        <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap', marginBottom: 32 }}>
-          <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 1px 4px rgba(0,0,0,0.04)', flex: 1, minWidth: 320, maxWidth: 480, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+        <div style={{ 
+          display: 'flex', 
+          gap: isMobile ? 16 : 32, 
+          flexWrap: 'wrap', 
+          marginBottom: 32,
+          flexDirection: isMobile ? 'column' : 'row'
+        }}>
+          <div style={{ 
+            background: '#fff', 
+            borderRadius: 16, 
+            padding: isMobile ? 16 : 24, 
+            boxShadow: '0 1px 4px rgba(0,0,0,0.04)', 
+            flex: 1, 
+            minWidth: isMobile ? '100%' : 320, 
+            maxWidth: isMobile ? '100%' : 480, 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'flex-start' 
+          }}>
             <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 16 }}>Portfolio Overview</div>
             <div style={{ width: 180, height: 180, margin: '0 auto' }}>
               {productHoldings.length === 0 ? (
@@ -174,7 +192,15 @@ export default function InvestmentsPortfolio() {
           </div>
           
           {/* Holdings Table Card */}
-          <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 1px 4px rgba(0,0,0,0.04)', flex: 1, minWidth: 320, maxWidth: 600 }}>
+          <div style={{ 
+            background: '#fff', 
+            borderRadius: 16, 
+            padding: isMobile ? 16 : 24, 
+            boxShadow: '0 1px 4px rgba(0,0,0,0.04)', 
+            flex: 1, 
+            minWidth: isMobile ? '100%' : 320, 
+            maxWidth: isMobile ? '100%' : 600 
+          }}>
             <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 16 }}>Product Holdings</div>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 16 }}>
               <thead>

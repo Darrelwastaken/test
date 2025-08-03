@@ -123,6 +123,7 @@ export default function LiabilitiesCredit() {
           clientRiskProfile={clientRiskProfile}
           nric={nric}
           isMobile={isMobile}
+          showCrmButton={false}
         />
         
         <h2 style={{ fontWeight: 700, fontSize: 32, marginBottom: 24 }}>Liabilities & Credit</h2>
@@ -143,9 +144,22 @@ export default function LiabilitiesCredit() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 32 }}>
+        <div style={{ 
+          display: 'flex', 
+          flexWrap: 'wrap', 
+          gap: isMobile ? 16 : 32,
+          flexDirection: isMobile ? 'column' : 'row'
+        }}>
           {/* Liabilities Details */}
-          <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 1px 4px rgba(0,0,0,0.04)', flex: 1, minWidth: 320, maxWidth: 480 }}>
+          <div style={{ 
+            background: '#fff', 
+            borderRadius: 16, 
+            padding: isMobile ? 16 : 24, 
+            boxShadow: '0 1px 4px rgba(0,0,0,0.04)', 
+            flex: 1, 
+            minWidth: isMobile ? '100%' : 320, 
+            maxWidth: isMobile ? '100%' : 480 
+          }}>
             <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 16 }}>Liabilities Details</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: '#f8fafc', borderRadius: 8 }}>
@@ -201,7 +215,15 @@ export default function LiabilitiesCredit() {
           </div>
 
           {/* Credit Analysis */}
-          <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 1px 4px rgba(0,0,0,0.04)', flex: 1, minWidth: 320, maxWidth: 480 }}>
+          <div style={{ 
+            background: '#fff', 
+            borderRadius: 16, 
+            padding: isMobile ? 16 : 24, 
+            boxShadow: '0 1px 4px rgba(0,0,0,0.04)', 
+            flex: 1, 
+            minWidth: isMobile ? '100%' : 320, 
+            maxWidth: isMobile ? '100%' : 480 
+          }}>
             <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 16 }}>Credit Analysis</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: '#f8fafc', borderRadius: 8 }}>

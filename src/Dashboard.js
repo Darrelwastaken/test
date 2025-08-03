@@ -272,6 +272,7 @@ export default function Dashboard({ user }) {
           clientRiskProfile={clientRiskProfile}
           nric={nric}
           isMobile={isMobile}
+          showCrmButton={false}
         />
 
         <h2 style={{ fontWeight: 700, fontSize: 32, marginBottom: 20 }}>Dashboard</h2>

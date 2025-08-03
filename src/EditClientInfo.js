@@ -1271,7 +1271,14 @@ export default function EditClientInfo() {
             </div>
             <div style={{ marginBottom: 24 }}>
             {formData.holdings.map((holding, index) => (
-              <div key={index} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: 24, marginBottom: 12, alignItems: 'end', marginBottom: 16 }}>
+              <div key={index} style={{ 
+                display: 'grid', 
+                gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr 1fr auto', 
+                gap: isMobile ? 12 : 24, 
+                marginBottom: isMobile ? 16 : 12, 
+                alignItems: isMobile ? 'stretch' : 'end',
+                flexDirection: isMobile ? 'column' : 'row'
+              }}>
                 <div>
                   <label style={{ fontWeight: 500, display: 'block', marginBottom: 4 }}>Asset</label>
                   <input
@@ -1366,7 +1373,14 @@ export default function EditClientInfo() {
             </div>
             <div style={{ marginBottom: 24 }}>
             {formData.liabilities.map((liability, index) => (
-              <div key={index} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: 24, marginBottom: 12, alignItems: 'end', marginBottom: 16 }}>
+              <div key={index} style={{ 
+                display: 'grid', 
+                gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr 1fr auto', 
+                gap: isMobile ? 12 : 24, 
+                marginBottom: isMobile ? 16 : 12, 
+                alignItems: isMobile ? 'stretch' : 'end',
+                flexDirection: isMobile ? 'column' : 'row'
+              }}>
                 <div>
                   <label style={{ fontWeight: 500, display: 'block', marginBottom: 4 }}>Name</label>
                   <input
@@ -1458,7 +1472,14 @@ export default function EditClientInfo() {
             </div>
             <div style={{ marginBottom: 24 }}>
             {formData.credit_lines.map((creditLine, index) => (
-              <div key={index} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: 24, marginBottom: 12, alignItems: 'end', marginBottom: 16 }}>
+              <div key={index} style={{ 
+                display: 'grid', 
+                gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr 1fr auto', 
+                gap: isMobile ? 12 : 24, 
+                marginBottom: isMobile ? 16 : 12, 
+                alignItems: isMobile ? 'stretch' : 'end',
+                flexDirection: isMobile ? 'column' : 'row'
+              }}>
                 <div>
                   <label style={{ fontWeight: 500, display: 'block', marginBottom: 4 }}>Name</label>
                   <input
@@ -1523,7 +1544,11 @@ export default function EditClientInfo() {
             {/* Financial Assets */}
             <div style={{ marginBottom: 24 }}>
               <h4 style={{ fontWeight: 600, fontSize: 16, marginBottom: 12 }}>Financial Assets</h4>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', 
+                gap: isMobile ? 12 : 16 
+              }}>
                 <div>
                   <label style={{ fontWeight: 500, display: 'block', marginBottom: 8 }}>Total Assets</label>
                   <input

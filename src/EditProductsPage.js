@@ -405,7 +405,12 @@ export default function EditProductsPage() {
                   paddingTop: '20px',
                   marginTop: '16px'
                 }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', 
+                    gap: isMobile ? '12px' : '16px', 
+                    marginBottom: '20px' 
+                  }}>
                     <div>
                       <label style={{ display: 'block', marginBottom: '4px', fontWeight: '600', fontSize: '14px' }}>
                         Product Name

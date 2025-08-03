@@ -120,7 +120,11 @@ export default function ProposalGenerator() {
           </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', 
+          gap: isMobile ? '16px' : '32px' 
+        }}>
           {/* Client Information */}
           <div style={{ background: '#fff', borderRadius: '12px', padding: '24px', border: '1px solid #e5e7eb' }}>
             <h2 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '16px' }}>Client Information</h2>

@@ -21,13 +21,15 @@ import ProductsPage from './ProductsPage';
 import EditProductsPage from './EditProductsPage';
 import AddProductPage from './AddProductPage';
 import TransactionBehavior from './TransactionBehavior';
-import LiabilitiesCredit from './LiabilitiesCredit';
+// Temporarily removed imports:
+// import LiabilitiesCredit from './LiabilitiesCredit';
 import InvestmentsPortfolio from './InvestmentsPortfolio';
-import ProposalGenerator from './ProposalGenerator';
-import DocumentsReports from './DocumentsReports';
+// import ProposalGenerator from './ProposalGenerator';
+// import DocumentsReports from './DocumentsReports';
 import EditClientInfo from './EditClientInfoNew';
 import { testDatabaseConnection } from './utils/testDatabaseConnection';
 import { authService } from './services/authService';
+import { useResponsiveLayout } from './hooks/useResponsiveLayout';
 
 const datePickerInputStyle = {
   width: '100%',
@@ -49,9 +51,10 @@ function Layout({ children, user, onLogout }) {
     { label: 'Product Recommendations' },
     { label: 'Transaction Behavior' },
     { label: 'Investments & Portfolio' },
-    { label: 'Liabilities & Credit' },
-    { label: 'Proposal Generator' },
-    { label: 'Documents & Reports' },
+    // Temporarily removed:
+    // { label: 'Liabilities & Credit' },
+    // { label: 'Proposal Generator' },
+    // { label: 'Documents & Reports' },
     { label: 'Settings', path: '/settings', show: !!user },
   ];
   return (
@@ -134,9 +137,18 @@ function Layout({ children, user, onLogout }) {
 
 function HomeLanding() {
   const navigate = useNavigate();
+  const { isMobile } = useResponsiveLayout();
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#f6f7f9' }}>
-      <div style={{ background: '#fff', borderRadius: 16, padding: 48, minWidth: 400, boxShadow: '0 1px 4px rgba(0,0,0,0.04)', textAlign: 'center' }}>
+      <div style={{ 
+        background: '#fff', 
+        borderRadius: 16, 
+        padding: isMobile ? 24 : 48, 
+        minWidth: isMobile ? '90%' : 400, 
+        maxWidth: isMobile ? '90%' : 400,
+        boxShadow: '0 1px 4px rgba(0,0,0,0.04)', 
+        textAlign: 'center' 
+      }}>
         <h1 style={{ fontWeight: 700, marginBottom: 32 }}>Welcome to Client 360</h1>
         <button style={{
           background: '#222', color: '#fff', border: 'none', borderRadius: 6, padding: '16px 32px', fontWeight: 500, fontSize: 18, marginBottom: 16, cursor: 'pointer', width: '100%'
@@ -151,6 +163,7 @@ function HomeLanding() {
 
 function SignUp({ onSuccess, noLayout }) {
   const navigate = useNavigate();
+  const { isMobile } = useResponsiveLayout();
   const [form, setForm] = useState({
     email: '',
     password: ''
@@ -192,9 +205,9 @@ function SignUp({ onSuccess, noLayout }) {
         const result = await authService.register(form.email, form.password);
         
         if (result.success) {
-          setSuccess('Sign up successful! Please log in.');
-          setForm({ email: '', password: '' });
-          if (onSuccess) onSuccess();
+      setSuccess('Sign up successful! Please log in.');
+      setForm({ email: '', password: '' });
+      if (onSuccess) onSuccess();
         } else {
           setErrors({ email: result.error });
         }
@@ -222,7 +235,11 @@ function SignUp({ onSuccess, noLayout }) {
           fontSize: 14, 
           cursor: 'pointer'
         }} onClick={() => navigate('/')}>Back</button>
-        <h2 style={{ fontWeight: 700, fontSize: 28, marginBottom: 32 }}>Sign Up</h2>
+        <h2 style={{ 
+          fontWeight: 700, 
+          fontSize: isMobile ? 24 : 28, 
+          marginBottom: isMobile ? 24 : 32 
+        }}>Sign Up</h2>
         <form onSubmit={handleSubmit} noValidate style={{ textAlign: 'left' }}>
           <div style={{ marginBottom: 20 }}>
             <label style={{ display: 'block', marginBottom: 8, fontWeight: 500, color: '#374151', fontSize: 14 }}>Email:</label>
@@ -272,16 +289,16 @@ function SignUp({ onSuccess, noLayout }) {
             type="submit" 
             disabled={isLoading}
             style={{ 
-              width: '100%',
+            width: '100%',
               background: isLoading ? '#9ca3af' : '#e5e7eb', 
-              color: '#222', 
-              border: 'none', 
-              borderRadius: 8, 
-              padding: '14px 24px', 
-              fontWeight: 600, 
-              fontSize: 16, 
+            color: '#222', 
+            border: 'none', 
+            borderRadius: 8, 
+            padding: '14px 24px', 
+            fontWeight: 600, 
+            fontSize: 16, 
               cursor: isLoading ? 'not-allowed' : 'pointer',
-              transition: 'background-color 0.2s'
+            transition: 'background-color 0.2s'
             }}
           >
             {isLoading ? 'Creating Account...' : 'Sign Up'}
@@ -293,7 +310,11 @@ function SignUp({ onSuccess, noLayout }) {
   ) : (
     <Layout>
       <div style={{ background: '#fff', borderRadius: 16, padding: 24, maxWidth: 400, margin: '0 auto', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-        <h2 style={{ fontWeight: 700, fontSize: 28, marginBottom: 24 }}>Sign Up</h2>
+        <h2 style={{ 
+          fontWeight: 700, 
+          fontSize: isMobile ? 24 : 28, 
+          marginBottom: isMobile ? 16 : 24 
+        }}>Sign Up</h2>
         <form onSubmit={handleSubmit} noValidate>
           <div>
             <label>Email:</label><br />
@@ -316,6 +337,7 @@ function SignUp({ onSuccess, noLayout }) {
 
 function Login({ onLogin, noLayout }) {
   const navigate = useNavigate();
+  const { isMobile } = useResponsiveLayout();
   const [form, setForm] = useState({
     email: '',
     password: ''
@@ -361,7 +383,7 @@ function Login({ onLogin, noLayout }) {
             setErrors({ email: result.error });
           } else if (result.error.includes('Incorrect password')) {
             setErrors({ password: result.error });
-          } else {
+      } else {
             setErrors({ email: result.error });
           }
         }
@@ -438,16 +460,16 @@ function Login({ onLogin, noLayout }) {
             type="submit" 
             disabled={isLoading}
             style={{ 
-              width: '100%',
+            width: '100%',
               background: isLoading ? '#9ca3af' : '#e5e7eb', 
-              color: '#222', 
-              border: 'none', 
-              borderRadius: 8, 
-              padding: '14px 24px', 
-              fontWeight: 600, 
-              fontSize: 16, 
+            color: '#222', 
+            border: 'none', 
+            borderRadius: 8, 
+            padding: '14px 24px', 
+            fontWeight: 600, 
+            fontSize: 16, 
               cursor: isLoading ? 'not-allowed' : 'pointer',
-              transition: 'background-color 0.2s'
+            transition: 'background-color 0.2s'
             }}
           >
             {isLoading ? 'Logging In...' : 'Login'}
@@ -543,7 +565,7 @@ function Settings({ user, onLogout }) {
         <div style={{ marginBottom: 32 }}>
           <h3 style={{ fontWeight: 600, marginBottom: 16, color: '#374151' }}>Profile Information</h3>
           <div style={{ display: 'grid', gap: '12px' }}>
-            <div><strong>Email:</strong> {user.email}</div>
+        <div><strong>Email:</strong> {user.email}</div>
             <div><strong>Role:</strong> {user.role || 'User'}</div>
             <div><strong>Account Created:</strong> {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}</div>
             <div><strong>Last Login:</strong> {user.last_login ? new Date(user.last_login).toLocaleString() : 'N/A'}</div>
@@ -718,10 +740,12 @@ function App() {
         <Route path="/edit-products/:nric" element={<EditProductsPage />} />
         <Route path="/add-product/:nric" element={<AddProductPage />} />
         <Route path="/transaction-behavior/:nric" element={<TransactionBehavior />} />
+        {/* Temporarily removed routes:
         <Route path="/liabilities-credit/:nric" element={<LiabilitiesCredit />} />
-        <Route path="/investments-portfolio/:nric" element={<InvestmentsPortfolio />} />
         <Route path="/proposal-generator/:nric" element={<ProposalGenerator />} />
         <Route path="/documents-reports/:nric" element={<DocumentsReports />} />
+        */}
+        <Route path="/investments-portfolio/:nric" element={<InvestmentsPortfolio />} />
         <Route path="/edit-client-info/:nric" element={<EditClientInfo />} />
         <Route path="/" element={loggedInUser ? <ClientSelection user={loggedInUser} onLogout={handleLogout} /> : <HomeLanding />} />
       </Routes>

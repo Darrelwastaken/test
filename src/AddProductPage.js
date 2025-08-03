@@ -160,7 +160,12 @@ export default function AddProductPage() {
           padding: '32px',
           boxShadow: '0 1px 4px rgba(0,0,0,0.04)'
         }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', 
+            gap: isMobile ? '16px' : '24px', 
+            marginBottom: '24px' 
+          }}>
             <div>
               <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', fontSize: '14px' }}>
                 Product Name *

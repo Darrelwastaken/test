@@ -7,9 +7,10 @@ const sidebarItems = [
   'Product Recommendations',
   'Transaction Behavior',
   'Investments & Portfolio',
-  'Liabilities & Credit',
-  'Proposal Generator',
-  'Documents & Reports',
+  // Temporarily removed:
+  // 'Liabilities & Credit',
+  // 'Proposal Generator',
+  // 'Documents & Reports',
 ];
 
 export default function Sidebar({ clientId, isMobile = false, isOpen = false, onToggle, onClose }) {

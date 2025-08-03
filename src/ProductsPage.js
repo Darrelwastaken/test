@@ -129,6 +129,7 @@ export default function ProductsPage() {
           clientRiskProfile={clientRiskProfile}
           nric={nric}
           isMobile={isMobile}
+          showCrmButton={false}
         />
         
         {/* Navigation */}
@@ -204,7 +205,7 @@ export default function ProductsPage() {
               border: '1px solid #e5e7eb',
               borderRadius: '8px',
               fontSize: '14px',
-              minWidth: '250px',
+              minWidth: isMobile ? '100%' : '250px',
               flex: 1
             }}
           />
@@ -217,7 +218,7 @@ export default function ProductsPage() {
               borderRadius: '8px',
               fontSize: '14px',
               background: '#fff',
-              minWidth: '200px'
+              minWidth: isMobile ? '100%' : '200px'
             }}
           >
             <option value="all">All Categories</option>

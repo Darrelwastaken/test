@@ -164,6 +164,7 @@ export default function FinancialSummary() {
           clientRiskProfile={clientRiskProfile}
           nric={nric}
           isMobile={isMobile}
+          showCrmButton={false}
         />
 
         <h2 style={{ fontWeight: 700, fontSize: 32, marginBottom: 20 }}>Financial Summary</h2>
@@ -318,7 +319,12 @@ export default function FinancialSummary() {
         </div>
 
         {/* Third Row - Credit Utilization and Risk Indicators */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', 
+          gap: isMobile ? 16 : 12, 
+          marginBottom: isMobile ? 16 : 20 
+        }}>
           {/* Credit Utilization vs Limits */}
           <div style={{ background: '#fff', borderRadius: 8, padding: '16px 12px', border: '1px solid #e5e7eb' }}>
             <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>Credit Utilization vs Limits</h3>

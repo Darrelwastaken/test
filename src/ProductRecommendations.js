@@ -82,6 +82,7 @@ export default function ProductRecommendations() {
           clientRiskProfile={clientRiskProfile}
           nric={nric}
           isMobile={isMobile}
+          showCrmButton={false}
         />
 
         <div style={{ 

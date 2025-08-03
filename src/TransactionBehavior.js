@@ -164,6 +164,7 @@ export default function TransactionBehavior() {
           clientRiskProfile={client.risk_profile}
           nric={nric}
           isMobile={isMobile}
+          showCrmButton={false}
         />
         
         <h2 style={{ fontWeight: 700, fontSize: 32, marginBottom: 24 }}>Transaction Behavior</h2>

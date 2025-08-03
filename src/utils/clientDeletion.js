@@ -10,33 +10,14 @@ export const deleteClientCompletely = async (clientNric) => {
   const deletedTables = [];
   const errors = [];
 
-  // All tables that contain client data
+  // Only include tables that actually exist in the current database structure
   const tablesToDelete = [
-    // Original tables
-    'liabilities_credit',
-    'investments_portfolio',
-    'transaction_behavior',
-    'financial_summary',
-    'dashboard_metrics',
-    
-    // New financial summary tables
-    'financial_assets',
-    'monthly_cashflow',
-    'product_holdings',
-    'relationship_profitability',
-    'credit_utilization',
-    'risk_indicators',
-    'financial_trends',
-    'asset_utilization',
-    'emergency_fund_analysis',
-    
-    // Transaction behavior enhancement tables
-    'recent_transactions_summary',
-    'categorised_spending',
-    'large_unusual_transactions',
-    'fund_transfers',
-    'atm_pos_activity',
-    'fx_transactions'
+    // Core client data tables (these should exist)
+    'manual_financial_inputs',
+    'calculated_financial_data',
+    'transaction_behavioral_data',
+    'financial_trends_monthly',
+    'ai_insights'
   ];
 
   try {
@@ -112,26 +93,11 @@ export const deleteClientCompletely = async (clientNric) => {
  */
 export const getClientDataTables = () => {
   return [
-    'liabilities_credit',
-    'investments_portfolio',
-    'transaction_behavior',
-    'financial_summary',
-    'dashboard_metrics',
-    'financial_assets',
-    'monthly_cashflow',
-    'product_holdings',
-    'relationship_profitability',
-    'credit_utilization',
-    'risk_indicators',
-    'financial_trends',
-    'asset_utilization',
-    'emergency_fund_analysis',
-    'recent_transactions_summary',
-    'categorised_spending',
-    'large_unusual_transactions',
-    'fund_transfers',
-    'atm_pos_activity',
-    'fx_transactions',
+    'manual_financial_inputs',
+    'calculated_financial_data',
+    'transaction_behavioral_data',
+    'financial_trends_monthly',
+    'ai_insights',
     'clients'
   ];
 };
